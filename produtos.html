@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Produtos — CONVICTOS UM 2027</title>
+<meta name="description" content="Loja oficial Convictos — camisas, dry fit e camisetas da conferência jovem Convictos UM 2027.">
+<link rel="icon" href="favicon.ico" sizes="any">
+<link rel="icon" type="image/png" href="assets/favicon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=DM+Sans:wght@300;400;500;600&family=Oswald:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<nav>
+  <div class="nav-logo"><a href="index.html"><img src="assets/logos/convictos-branco.png" alt="Convictos"></a></div>
+  <div class="nav-links">
+    <a href="index.html#sobre">Sobre</a>
+    <a href="index.html#missao">Missão</a>
+    <a href="produtos.html" class="active">Produtos</a>
+    <a href="index.html#valores">Valores</a>
+    <a href="index.html#inscricao" class="nav-cta">Inscreva-se</a>
+  </div>
+  <button class="nav-hamburger" onclick="document.getElementById('mobileMenu').classList.toggle('open')" aria-label="Menu">
+    <span></span><span></span><span></span>
+  </button>
+</nav>
+
+<div class="mobile-menu" id="mobileMenu">
+  <a href="index.html#sobre" onclick="document.getElementById('mobileMenu').classList.remove('open')">Sobre</a>
+  <a href="index.html#missao" onclick="document.getElementById('mobileMenu').classList.remove('open')">Missão</a>
+  <a href="produtos.html" onclick="document.getElementById('mobileMenu').classList.remove('open')">Produtos</a>
+  <a href="index.html#valores" onclick="document.getElementById('mobileMenu').classList.remove('open')">Valores</a>
+  <a href="index.html#inscricao" onclick="document.getElementById('mobileMenu').classList.remove('open')">Inscreva-se</a>
+</div>
+
+<!-- SHOP HERO -->
+<header class="shop-hero">
+  <img src="assets/logos/chama-cor.png" alt="" class="shop-flame">
+  <span class="label">Loja Oficial · 2027</span>
+  <h2 class="title">VISTA A<br><span class="stroke">CONVICÇÃO</span></h2>
+  <p>A linha oficial Convictos UM 2027, inspirada no futebol americano. Tipografia forte, números esportivos e o versículo João 17:21 — para uma geração que carrega a fé com identidade.</p>
+</header>
+
+<!-- PRODUTOS -->
+<section class="shop-section">
+  <div class="shop-filters">
+    <button class="shop-filter active" data-filter="all">Todos</button>
+    <button class="shop-filter" data-filter="jersey">Camisas Oficiais</button>
+    <button class="shop-filter" data-filter="dryfit">Dry Fit</button>
+    <button class="shop-filter" data-filter="tee">Camisetas</button>
+  </div>
+
+  <div class="shop-grid">
+    <article class="product-card" data-cat="jersey">
+      <div class="product-media"><img src="assets/produtos/camisa-azul.jpg" alt="Camisa Oficial Convictos Azul"></div>
+      <div class="product-body">
+        <span class="product-cat">Camisa Oficial</span>
+        <h3 class="product-name">Camisa Azul Marinho</h3>
+        <p class="product-desc">Modelo jogador com gola em V, detalhes em vermelho e número "UM" nas costas.</p>
+        <div class="product-foot">
+          <div class="product-price">Sob consulta<span>Frente + costas</span></div>
+          <a href="#" class="product-btn">Encomendar</a>
+        </div>
+      </div>
+    </article>
+
+    <article class="product-card" data-cat="jersey">
+      <div class="product-media"><img src="assets/produtos/camisa-vinho.jpg" alt="Camisa Oficial Convictos Vinho"></div>
+      <div class="product-body">
+        <span class="product-cat">Camisa Oficial</span>
+        <h3 class="product-name">Camisa Vinho</h3>
+        <p class="product-desc">Modelo jogador com acabamento em dourado e número "UM" nas costas.</p>
+        <div class="product-foot">
+          <div class="product-price">Sob consulta<span>Frente + costas</span></div>
+          <a href="#" class="product-btn">Encomendar</a>
+        </div>
+      </div>
+    </article>
+
+    <article class="product-card" data-cat="jersey">
+      <div class="product-media"><img src="assets/produtos/camisa-preta.jpg" alt="Camisa Oficial Convictos Preta"></div>
+      <div class="product-body">
+        <span class="product-cat">Camisa Oficial</span>
+        <h3 class="product-name">Camisa Preta</h3>
+        <p class="product-desc">Modelo jogador monocromático com detalhes em branco e número "UM".</p>
+        <div class="product-foot">
+          <div class="product-price">Sob consulta<span>Frente + costas</span></div>
+          <a href="#" class="product-btn">Encomendar</a>
+        </div>
+      </div>
+    </article>
+
+    <article class="product-card" data-cat="jersey">
+      <div class="product-media"><img src="assets/produtos/camisa-branca.jpg" alt="Camisa Oficial Convictos Branca"></div>
+      <div class="product-body">
+        <span class="product-cat">Camisa Oficial</span>
+        <h3 class="product-name">Camisa Branca</h3>
+        <p class="product-desc">Modelo jogador com detalhes em azul e vermelho e número "UM" nas costas.</p>
+        <div class="product-foot">
+          <div class="product-price">Sob consulta<span>Frente + costas</span></div>
+          <a href="#" class="product-btn">Encomendar</a>
+        </div>
+      </div>
+    </article>
+
+    <article class="product-card" data-cat="dryfit">
+      <div class="product-media"><img src="assets/produtos/dryfit-azul.jpg" alt="Dry Fit Convictos Azul"></div>
+      <div class="product-body">
+        <span class="product-cat">Dry Fit</span>
+        <h3 class="product-name">Dry Fit Azul</h3>
+        <p class="product-desc">Tecido leve e esportivo com escudo "UM" no peito e arte gráfica nas costas.</p>
+        <div class="product-foot">
+          <div class="product-price">Sob consulta<span>Frente + costas</span></div>
+          <a href="#" class="product-btn">Encomendar</a>
+        </div>
+      </div>
+    </article>
+
+    <article class="product-card" data-cat="tee">
+      <div class="product-media"><img src="assets/produtos/tee-branca.jpg" alt="Camiseta Convictos Branca"></div>
+      <div class="product-body">
+        <span class="product-cat">Camiseta</span>
+        <h3 class="product-name">Camiseta Branca</h3>
+        <p class="product-desc">Camiseta casual com logo na frente e escudo "UM" nas costas.</p>
+        <div class="product-foot">
+          <div class="product-price">Sob consulta<span>Frente + costas</span></div>
+          <a href="#" class="product-btn">Encomendar</a>
+        </div>
+      </div>
+    </article>
+
+    <article class="product-card" data-cat="tee">
+      <div class="product-media"><img src="assets/produtos/tee-preta.jpg" alt="Camiseta Convictos Preta"></div>
+      <div class="product-body">
+        <span class="product-cat">Camiseta</span>
+        <h3 class="product-name">Camiseta Preta</h3>
+        <p class="product-desc">Camiseta casual em preto com logo na frente e escudo "UM" nas costas.</p>
+        <div class="product-foot">
+          <div class="product-price">Sob consulta<span>Frente + costas</span></div>
+          <a href="#" class="product-btn">Encomendar</a>
+        </div>
+      </div>
+    </article>
+
+    <article class="product-card" data-cat="tee">
+      <div class="product-media"><img src="assets/produtos/tee-vinho.jpg" alt="Camiseta Convictos Vinho"></div>
+      <div class="product-body">
+        <span class="product-cat">Camiseta</span>
+        <h3 class="product-name">Camiseta Vinho "UM"</h3>
+        <p class="product-desc">Camiseta casual com estampa "UM" e "Para que todos sejam um" nas costas.</p>
+        <div class="product-foot">
+          <div class="product-price">Sob consulta<span>Frente + costas</span></div>
+          <a href="#" class="product-btn">Encomendar</a>
+        </div>
+      </div>
+    </article>
+  </div>
+
+  <div class="shop-cta">
+    <h3>FAÇA SEU PEDIDO</h3>
+    <p>Garanta a sua peça oficial da conferência. Fale com a nossa equipe para tamanhos, valores e prazos de entrega.</p>
+    <a href="#" class="btn-primary">Falar no WhatsApp</a>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-logo"><a href="index.html"><img src="assets/logos/convictos-branco.png" alt="Convictos"></a></div>
+  <p class="footer-text">Juventude Mais · Assembleia de Deus · Ministério Madureira · Luziânia<br>
+    © 2027 Conferência Convictos. Todos os direitos reservados.</p>
+  <span class="footer-badge">João 17:21</span>
+</footer>
+
+<script src="script.js"></script>
+<script>
+document.querySelectorAll('.shop-filter').forEach(function(btn){
+  btn.addEventListener('click', function(){
+    document.querySelectorAll('.shop-filter').forEach(function(b){ b.classList.remove('active'); });
+    btn.classList.add('active');
+    var f = btn.getAttribute('data-filter');
+    document.querySelectorAll('.product-card').forEach(function(card){
+      var show = (f === 'all' || card.getAttribute('data-cat') === f);
+      card.style.display = show ? 'flex' : 'none';
+    });
+  });
+});
+</script>
+</body>
+</html>
