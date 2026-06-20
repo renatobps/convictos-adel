@@ -6,9 +6,9 @@ use App\Models\Product;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
-use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\ImageColumn;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Columns\ToggleColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Filters\TernaryFilter;
 use Filament\Tables\Table;
@@ -35,18 +35,19 @@ class ProductsTable
                 TextColumn::make('price')
                     ->label('Preço')
                     ->money('BRL')
+                    ->description(fn ($record) => $record->hide_price ? 'oculto no site' : null)
                     ->sortable(),
+                ToggleColumn::make('available_for_sale')
+                    ->label('À venda'),
                 TextColumn::make('stock')
                     ->label('Estoque')
                     ->numeric()
                     ->placeholder('Ilimitado')
                     ->sortable(),
-                IconColumn::make('active')
-                    ->label('Ativo')
-                    ->boolean(),
-                IconColumn::make('featured')
-                    ->label('Destaque')
-                    ->boolean(),
+                ToggleColumn::make('active')
+                    ->label('Ativo'),
+                ToggleColumn::make('featured')
+                    ->label('Destaque'),
                 TextColumn::make('sort_order')
                     ->label('Ordem')
                     ->numeric()
@@ -58,6 +59,8 @@ class ProductsTable
                     ->options(Product::CATEGORIES),
                 TernaryFilter::make('active')
                     ->label('Ativo'),
+                TernaryFilter::make('available_for_sale')
+                    ->label('Disponível para compra'),
             ])
             ->recordActions([
                 EditAction::make(),

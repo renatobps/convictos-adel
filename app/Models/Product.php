@@ -13,6 +13,8 @@ class Product extends Model
         'category',
         'description',
         'price',
+        'hide_price',
+        'available_for_sale',
         'image',
         'sizes',
         'stock',
@@ -24,6 +26,8 @@ class Product extends Model
     protected $casts = [
         'price' => 'decimal:2',
         'sizes' => 'array',
+        'hide_price' => 'boolean',
+        'available_for_sale' => 'boolean',
         'active' => 'boolean',
         'featured' => 'boolean',
     ];
@@ -46,6 +50,20 @@ class Product extends Model
     public function getCategoryLabelAttribute(): string
     {
         return self::CATEGORIES[$this->category] ?? $this->category;
+    }
+
+    public function isPurchasable(): bool
+    {
+        return $this->active && $this->available_for_sale;
+    }
+
+    public function getPriceLabelAttribute(): string
+    {
+        if ($this->hide_price) {
+            return 'Sob consulta';
+        }
+
+        return 'R$ ' . number_format((float) $this->price, 2, ',', '.');
     }
 
     public function getImageUrlAttribute(): string

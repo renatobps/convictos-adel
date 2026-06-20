@@ -42,8 +42,10 @@ class CheckoutController extends Controller
         $data = $request->validate([
             'customer_name' => ['required', 'string', 'max:255'],
             'customer_email' => ['required', 'email', 'max:255'],
-            'customer_phone' => ['nullable', 'string', 'max:30'],
+            'customer_phone' => ['nullable', 'string', 'regex:/^\(\d{2}\) \d{5}-\d{4}$/'],
             'notes' => ['nullable', 'string', 'max:1000'],
+        ], [
+            'customer_phone.regex' => 'Informe o telefone no formato (99) 99999-9999.',
         ]);
 
         $order = DB::transaction(function () use ($data) {

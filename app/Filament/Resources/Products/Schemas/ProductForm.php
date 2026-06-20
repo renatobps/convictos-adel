@@ -48,6 +48,12 @@ class ProductForm
                 TextInput::make('stock')
                     ->label('Estoque (deixe vazio para ilimitado)')
                     ->numeric(),
+                Toggle::make('hide_price')
+                    ->label('Ocultar preço (mostrar "Sob consulta")')
+                    ->helperText('Quando ligado, o valor não aparece no site.'),
+                Toggle::make('available_for_sale')
+                    ->label('Disponível para compra')
+                    ->helperText('Desligado = produto apenas para exibição (sem botão de compra).'),
                 FileUpload::make('image')
                     ->label('Imagem')
                     ->image()

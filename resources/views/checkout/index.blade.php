@@ -27,7 +27,7 @@
         </div>
         <div class="field">
           <label>WhatsApp / Telefone</label>
-          <input type="tel" name="customer_phone" class="form-input" value="{{ old('customer_phone') }}">
+          <input type="tel" name="customer_phone" class="form-input" placeholder="(99) 99999-9999" inputmode="numeric" maxlength="15" data-phone value="{{ old('customer_phone') }}">
         </div>
         <div class="field">
           <label>Observações (tamanho, ponto de entrega, etc.)</label>

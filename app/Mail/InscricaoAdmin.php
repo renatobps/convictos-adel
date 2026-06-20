@@ -20,7 +20,7 @@ class InscricaoAdmin extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'Nova inscrição: ' . $this->inscricao->nome,
+            subject: 'Novo lead: ' . $this->inscricao->nome,
         );
     }
 

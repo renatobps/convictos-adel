@@ -78,6 +78,8 @@ class ProductSeeder extends Seeder
                 array_merge($data, [
                     'sizes' => $sizes,
                     'active' => true,
+                    'hide_price' => false,
+                    'available_for_sale' => false,
                     'sort_order' => $index,
                 ])
             );

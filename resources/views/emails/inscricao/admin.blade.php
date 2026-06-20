@@ -1,7 +1,7 @@
 <x-mail::message>
-# Nova inscrição recebida
+# Novo lead capturado
 
-Uma nova inscrição foi registrada no site.
+Um novo contato se cadastrou no site.
 
 - **Nome:** {{ $inscricao->nome }}
 - **E-mail:** {{ $inscricao->email }}

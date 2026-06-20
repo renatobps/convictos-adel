@@ -15,7 +15,7 @@
     </div>
     <p class="hero-verse">"Para que todos sejam um." — <strong>João 17:21</strong></p>
     <div class="btn-row">
-      <a href="#inscricao" class="btn-primary">Quero Participar</a>
+      <a href="#inscricao" class="btn-primary">Quero saber mais</a>
       <a href="#sobre" class="btn-outline">Saiba Mais</a>
     </div>
   </div>
@@ -167,14 +167,14 @@
   </div>
 </section>
 
-<!-- CTA / INSCRIÇÃO -->
+<!-- CTA / NOVIDADES -->
 <section class="cta-section" id="inscricao">
   <img src="{{ asset('assets/logos/chama-cor.png') }}" alt="" class="cta-bg-flame">
   <div class="cta-inner">
-    <span class="label">Faça Parte</span>
+    <span class="label">Fique por dentro</span>
     <div class="cta-title">SEJA<br>CONVICTO</div>
     <div class="cta-verse">"Para que todos sejam um."</div>
-    <p class="cta-sub">Inscreva-se e seja o primeiro a saber das novidades do Convictos UM 2027. Uma geração que não recua.</p>
+    <p class="cta-sub">Deixe seu contato e seja o primeiro a saber quando as inscrições do Convictos UM 2027 forem abertas. Novidades e avisos em primeira mão.</p>
 
     @if(session('inscricao_success'))
       <div class="flash flash-success" style="position:static;margin:0 0 20px;">{{ session('inscricao_success') }}</div>
@@ -191,13 +191,13 @@
       <div class="form-group">
         <input type="text" name="nome" class="form-input" placeholder="Seu nome completo" value="{{ old('nome') }}" required>
         <input type="email" name="email" class="form-input" placeholder="Seu melhor e-mail" value="{{ old('email') }}" required>
-        <input type="tel" name="whatsapp" class="form-input" placeholder="WhatsApp (opcional)" value="{{ old('whatsapp') }}">
+        <input type="tel" name="whatsapp" class="form-input" placeholder="(99) 99999-9999" inputmode="numeric" maxlength="15" data-phone value="{{ old('whatsapp') }}">
         <input type="text" name="cidade" class="form-input" placeholder="Cidade (opcional)" value="{{ old('cidade') }}">
         <input type="text" name="igreja" class="form-input" placeholder="Igreja (opcional)" value="{{ old('igreja') }}">
       </div>
-      <button class="form-submit" type="submit">Quero me inscrever</button>
+      <button class="form-submit" type="submit">Quero receber novidades</button>
     </form>
-    <p class="cta-note">Sem spam. Só o que importa — a Conferência Definitiva.</p>
+    <p class="cta-note">Sem spam. Só avisamos sobre o que importa — a Conferência Definitiva.</p>
     <div class="social-links">
       <a href="#" class="social-link">Instagram</a>
       <a href="#" class="social-link">YouTube</a>

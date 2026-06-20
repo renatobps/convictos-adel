@@ -20,11 +20,11 @@ class InscricaoResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedUserGroup;
 
-    protected static ?string $modelLabel = 'Inscrição';
+    protected static ?string $modelLabel = 'Lead';
 
-    protected static ?string $pluralModelLabel = 'Inscrições';
+    protected static ?string $pluralModelLabel = 'Leads';
 
-    protected static ?string $navigationLabel = 'Inscrições';
+    protected static ?string $navigationLabel = 'Leads';
 
     protected static ?int $navigationSort = 1;
 

@@ -20,7 +20,7 @@ class InscricaoRecebida extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'Recebemos sua inscrição — Convictos UM 2027',
+            subject: 'Recebemos seu cadastro — Convictos UM 2027',
         );
     }
 

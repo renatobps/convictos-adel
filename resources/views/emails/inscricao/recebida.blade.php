@@ -1,11 +1,11 @@
 <x-mail::message>
-# Inscrição recebida! 🔥
+# Cadastro recebido! 🔥
 
 Olá, **{{ $inscricao->nome }}**!
 
-Recebemos a sua inscrição para a conferência **Convictos UM 2027**. Que alegria ter você com a gente!
+Recebemos o seu contato. Você vai ser um dos primeiros a saber das novidades do **Convictos UM 2027** — incluindo a abertura das inscrições.
 
-Em breve nossa equipe entrará em contato com mais informações.
+Fique de olho no seu e-mail e WhatsApp!
 
 @if($inscricao->cidade || $inscricao->igreja)
 **Seus dados:**

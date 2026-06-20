@@ -16,10 +16,12 @@ class InscricaoController extends Controller
         $data = $request->validate([
             'nome' => ['required', 'string', 'max:255'],
             'email' => ['required', 'email', 'max:255'],
-            'whatsapp' => ['nullable', 'string', 'max:30'],
+            'whatsapp' => ['nullable', 'string', 'regex:/^\(\d{2}\) \d{5}-\d{4}$/'],
             'idade' => ['nullable', 'string', 'max:10'],
             'cidade' => ['nullable', 'string', 'max:120'],
             'igreja' => ['nullable', 'string', 'max:255'],
+        ], [
+            'whatsapp.regex' => 'Informe o WhatsApp no formato (99) 99999-9999.',
         ]);
 
         $inscricao = Inscricao::create($data + ['status' => 'novo']);
@@ -29,7 +31,7 @@ class InscricaoController extends Controller
         return redirect()
             ->route('home')
             ->withFragment('inscricao')
-            ->with('inscricao_success', 'Inscrição enviada! Em breve entraremos em contato.');
+            ->with('inscricao_success', 'Cadastro recebido! Avisaremos você em primeira mão sobre as novidades.');
     }
 
     protected function sendEmails(Inscricao $inscricao): void

@@ -30,6 +30,11 @@ class CartController extends Controller
 
         $product = Product::where('active', true)->findOrFail($data['product_id']);
 
+        if (! $product->isPurchasable()) {
+            return redirect()->route('store.show', $product)
+                ->with('error', 'Este produto ainda não está disponível para compra.');
+        }
+
         $this->cart->add($product, $data['size'] ?? null, $data['quantity'] ?? 1);
 
         return redirect()->route('cart.index')

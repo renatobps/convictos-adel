@@ -6,16 +6,25 @@
 @section('content')
 <section class="product-detail">
   <div class="product-detail-grid">
-    <div class="product-detail-media">
-      <img src="{{ $product->image_url }}" alt="{{ $product->name }}">
+    <div class="product-detail-media-col">
+      <div class="product-detail-media">
+        <img src="{{ $product->image_url }}" alt="{{ $product->name }}">
+      </div>
+      @if($product->category === 'jersey')
+      <div class="product-detail-video">
+        <span class="video-label">Vídeo da coleção</span>
+        <video src="{{ asset('assets/produtos/um.mp4') }}" controls playsinline preload="metadata" poster="{{ $product->image_url }}"></video>
+      </div>
+      @endif
     </div>
     <div class="product-detail-info">
       <a href="{{ route('store.index') }}" class="product-back">← Voltar à loja</a>
       <span class="product-cat">{{ $product->category_label }}</span>
       <h1 class="product-detail-name">{{ $product->name }}</h1>
-      <div class="product-detail-price">R$ {{ number_format($product->price, 2, ',', '.') }}</div>
+      <div class="product-detail-price">{{ $product->price_label }}</div>
       <p class="product-detail-desc">{{ $product->description }}</p>
 
+      @if($product->isPurchasable())
       <form method="POST" action="{{ route('cart.add') }}" class="product-form">
         @csrf
         <input type="hidden" name="product_id" value="{{ $product->id }}">
@@ -41,6 +50,12 @@
 
         <button type="submit" class="btn-primary" style="width:100%;">Adicionar ao carrinho</button>
       </form>
+      @else
+      <div class="product-soon-box">
+        <span class="product-soon-tag">Em breve</span>
+        <p>As vendas deste produto ainda não estão abertas. Fique de olho — em breve você poderá garantir o seu!</p>
+      </div>
+      @endif
 
       <a href="https://wa.me/{{ config('services.loja.whatsapp') }}?text={{ urlencode('Olá! Tenho interesse no produto: ' . $product->name) }}" class="product-whats">Tirar dúvida no WhatsApp</a>
     </div>
