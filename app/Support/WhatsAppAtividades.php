@@ -3,6 +3,8 @@
 namespace App\Support;
 
 use Carbon\Carbon;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Pagination\LengthAwarePaginator as Paginator;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
 
@@ -12,6 +14,29 @@ class WhatsAppAtividades
      * @return array<int, array{hora: string, tipo: string, texto: string, status: string, destinatario: string|null}>
      */
     public static function listar(int $limit = 12): array
+    {
+        return array_slice(self::coletar(), 0, $limit);
+    }
+
+    public static function paginar(int $page = 1, int $perPage = 5): LengthAwarePaginator
+    {
+        $itens = self::coletar();
+        $total = count($itens);
+        $page = max(1, $page);
+        $offset = ($page - 1) * $perPage;
+
+        return new Paginator(
+            array_slice($itens, $offset, $perPage),
+            $total,
+            $perPage,
+            $page,
+        );
+    }
+
+    /**
+     * @return array<int, array{hora: string, tipo: string, texto: string, status: string, destinatario: string|null}>
+     */
+    private static function coletar(): array
     {
         $itens = [];
 
@@ -53,7 +78,7 @@ class WhatsAppAtividades
                 'status' => $item['status'],
                 'destinatario' => $item['destinatario'],
             ],
-            array_slice($itens, 0, $limit)
+            $itens
         );
     }
 

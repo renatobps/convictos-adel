@@ -230,14 +230,79 @@ class WhatsAppService
     }
 
     /**
+     * Envia localização via Evolution API sendLocation.
+     *
+     * @return array{ok: bool, erro: ?string}
+     */
+    public function tentarEnviarLocalizacao(
+        string $numero,
+        string $name,
+        string $address,
+        float $latitude,
+        float $longitude,
+    ): array {
+        $this->ultimoErro = null;
+
+        if ($msg = $this->obterMensagemSeDesconectado()) {
+            $this->ultimoErro = $msg;
+
+            return ['ok' => false, 'erro' => $msg];
+        }
+
+        $number = $this->normalizarNumeroWhatsapp($numero);
+        if ($number === null) {
+            $this->ultimoErro = 'Número inválido. Use DDD + número (11 dígitos), ex: 61993640457.';
+
+            return ['ok' => false, 'erro' => $this->ultimoErro];
+        }
+
+        $endpoint = $this->resolveEndpoint((string) $this->cfg('location_endpoint'));
+        $response = $this->post($endpoint, [
+            'number' => $number,
+            'name' => mb_substr(trim($name) !== '' ? $name : 'Local de retirada', 0, 120),
+            'address' => mb_substr(trim($address) !== '' ? $address : 'Endereço não informado', 0, 240),
+            'latitude' => $latitude,
+            'longitude' => $longitude,
+        ]);
+
+        if ($response->successful()) {
+            return ['ok' => true, 'erro' => null];
+        }
+
+        $this->ultimoErro = $this->extrairErroApi($response);
+
+        Log::warning('Falha ao enviar localização via Evolution API.', [
+            'status' => $response->status(),
+            'body' => $response->body(),
+        ]);
+
+        return ['ok' => false, 'erro' => $this->ultimoErro];
+    }
+
+    public function enviarLocalizacao(
+        string $numero,
+        string $name,
+        string $address,
+        float $latitude,
+        float $longitude,
+    ): bool {
+        return $this->tentarEnviarLocalizacao($numero, $name, $address, $latitude, $longitude)['ok'];
+    }
+
+    /**
      * Envia enquete com botões clicáveis (Evolution API sendButtons).
      * WhatsApp permite no máximo 3 botões.
      *
      * @param  array<int, string|array<string, mixed>>  $opcoes
      * @return array{ok: bool, erro: ?string}
      */
-    public function tentarEnviarEnqueteBotoes(string $numero, string $titulo, string $descricao, array $opcoes): array
-    {
+    public function tentarEnviarEnqueteBotoes(
+        string $numero,
+        string $titulo,
+        string $descricao,
+        array $opcoes,
+        ?int $enqueteId = null,
+    ): array {
         $this->ultimoErro = null;
 
         if ($msg = $this->obterMensagemSeDesconectado()) {
@@ -264,10 +329,14 @@ class WhatsAppService
                 continue;
             }
 
+            $indice = count($botoes) + 1;
+
             $botoes[] = [
                 'type' => 'reply',
                 'displayText' => $label,
-                'id' => (string) (count($botoes) + 1),
+                'id' => $enqueteId !== null
+                    ? "enq_{$enqueteId}_{$indice}"
+                    : (string) $indice,
             ];
         }
 
@@ -307,9 +376,14 @@ class WhatsAppService
         return ['ok' => false, 'erro' => $this->ultimoErro];
     }
 
-    public function enviarEnqueteBotoes(string $numero, string $titulo, string $descricao, array $opcoes): bool
-    {
-        return $this->tentarEnviarEnqueteBotoes($numero, $titulo, $descricao, $opcoes)['ok'];
+    public function enviarEnqueteBotoes(
+        string $numero,
+        string $titulo,
+        string $descricao,
+        array $opcoes,
+        ?int $enqueteId = null,
+    ): bool {
+        return $this->tentarEnviarEnqueteBotoes($numero, $titulo, $descricao, $opcoes, $enqueteId)['ok'];
     }
 
     public function enviarMidia(
@@ -585,6 +659,51 @@ class WhatsAppService
         return $response->successful();
     }
 
+    public function configurarWebhook(?string $url = null): bool
+    {
+        $url ??= (string) config('services.evolution_api.webhook_url', '');
+
+        if ($url === '' || ! $this->isConfigured()) {
+            return false;
+        }
+
+        $instance = $this->instanceName();
+        $payloads = [
+            [
+                'webhook' => [
+                    'enabled' => true,
+                    'url' => $url,
+                    'webhookByEvents' => false,
+                    'webhookBase64' => false,
+                    'events' => ['MESSAGES_UPSERT'],
+                ],
+            ],
+            [
+                'enabled' => true,
+                'url' => $url,
+                'webhookByEvents' => false,
+                'events' => ['MESSAGES_UPSERT'],
+            ],
+        ];
+
+        foreach ($payloads as $payload) {
+            $response = Http::withHeaders($this->headers())
+                ->timeout(20)
+                ->post($this->url("/webhook/set/{$instance}"), $payload);
+
+            if ($response->successful()) {
+                return true;
+            }
+        }
+
+        Log::warning('Falha ao configurar webhook na Evolution API.', [
+            'instance' => $instance,
+            'url' => $url,
+        ]);
+
+        return false;
+    }
+
     /**
      * @return array{qrCode: string, pairingCode: string, mensagem: string}
      */
@@ -758,8 +877,28 @@ class WhatsAppService
     {
         $digits = preg_replace('/\D+/', '', $rawNumber) ?: '';
 
+        if ($digits === '') {
+            return null;
+        }
+
+        // DDD + celular sem nono dígito (10 dígitos) → 55 + DDD + 9 + número
+        if (strlen($digits) === 10) {
+            $digits = '55'.substr($digits, 0, 2).'9'.substr($digits, 2);
+        }
+
+        // Celular com nono dígito, sem DDI (11 dígitos)
         if (strlen($digits) === 11) {
-            return '55'.$digits;
+            $digits = '55'.$digits;
+        }
+
+        // DDI 55 + DDD + fixo/celular antigo sem nono (12 dígitos)
+        if (strlen($digits) === 12 && str_starts_with($digits, '55')) {
+            $ddd = substr($digits, 2, 2);
+            $local = substr($digits, 4);
+
+            if (strlen($local) === 8) {
+                $digits = '55'.$ddd.'9'.$local;
+            }
         }
 
         if (strlen($digits) === 13 && str_starts_with($digits, '55')) {
@@ -767,6 +906,18 @@ class WhatsAppService
         }
 
         return null;
+    }
+
+    public function numerosEquivalentes(string $a, string $b): bool
+    {
+        $normalizadoA = $this->normalizarNumeroWhatsapp($a);
+        $normalizadoB = $this->normalizarNumeroWhatsapp($b);
+
+        if ($normalizadoA === null || $normalizadoB === null) {
+            return false;
+        }
+
+        return $normalizadoA === $normalizadoB;
     }
 
     public function isConfigured(): bool

@@ -11,6 +11,7 @@ use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Filament\Support\Enums\Width;
 use Filament\Support\Icons\Heroicon;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Computed;
 
@@ -35,6 +36,8 @@ class WhatsAppConfiguracao extends Page
     public string $numero_teste = '61993640457';
 
     public string $mensagem_teste = 'Teste do sistema Convictos UM 2027!';
+
+    public int $atividadesPagina = 1;
 
     public static function canAccess(): bool
     {
@@ -111,7 +114,7 @@ class WhatsAppConfiguracao extends Page
 
     protected function limparCacheComputado(): void
     {
-        unset($this->conectado, $this->qrCode, $this->qrMensagem, $this->pairingCode, $this->erros, $this->atividades, $this->dadosInstancia);
+        unset($this->conectado, $this->qrCode, $this->qrMensagem, $this->pairingCode, $this->erros, $this->atividadesPaginadas, $this->dadosInstancia);
     }
 
     #[Computed]
@@ -176,13 +179,32 @@ class WhatsAppConfiguracao extends Page
         return $this->wppInfo['erros'] ?? [];
     }
 
-    /**
-     * @return array<int, array{hora: string, tipo: string, texto: string, status: string, destinatario: string|null}>
-     */
     #[Computed]
-    public function atividades(): array
+    public function atividadesPaginadas(): LengthAwarePaginator
     {
-        return WhatsAppAtividades::listar(12);
+        return WhatsAppAtividades::paginar($this->atividadesPagina, 5);
+    }
+
+    public function paginaAnteriorAtividades(): void
+    {
+        if ($this->atividadesPagina <= 1) {
+            return;
+        }
+
+        $this->atividadesPagina--;
+        unset($this->atividadesPaginadas);
+    }
+
+    public function proximaPaginaAtividades(): void
+    {
+        $paginator = WhatsAppAtividades::paginar($this->atividadesPagina, 5);
+
+        if ($this->atividadesPagina >= $paginator->lastPage()) {
+            return;
+        }
+
+        $this->atividadesPagina++;
+        unset($this->atividadesPaginadas);
     }
 
     public function enviarTeste(): void
@@ -207,6 +229,7 @@ class WhatsAppConfiguracao extends Page
                 AtividadeLogService::ACAO_NOTIFICACAO,
             );
             Notification::make()->title('Mensagem de teste enviada.')->success()->send();
+            $this->atividadesPagina = 1;
         } else {
             $erro = $whatsApp->obterUltimoErro() ?: 'Falha ao enviar mensagem de teste.';
             Notification::make()->title($erro)->danger()->send();

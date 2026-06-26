@@ -23,6 +23,7 @@ use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
 use Filament\Schemas\Components\Utilities\Get;
+use Filament\Support\Enums\FontWeight;
 use Filament\Support\Enums\Width;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\IconColumn;
@@ -41,9 +42,16 @@ class InscricaosTable
 
         return $table
             ->defaultSort('created_at', 'desc')
+            ->stackedOnMobile()
             ->recordAction('detalhes')
             ->recordUrl(null)
             ->columns([
+                TextColumn::make('nome')
+                    ->label('Nome')
+                    ->weight(FontWeight::Bold)
+                    ->searchable()
+                    ->sortable()
+                    ->extraCellAttributes($cell),
                 TextColumn::make('codigo')
                     ->label('Código')
                     ->badge()
@@ -52,10 +60,22 @@ class InscricaosTable
                     ->copyMessage('Código copiado')
                     ->searchable()
                     ->extraCellAttributes($cell),
-                TextColumn::make('nome')
-                    ->label('Nome')
+                TextColumn::make('status')
+                    ->label('Status')
+                    ->badge()
+                    ->formatStateUsing(fn ($state) => Inscricao::statusOptions()[$state] ?? ucfirst((string) $state))
+                    ->color(fn (string $state): string => match ($state) {
+                        Inscricao::STATUS_AGUARDANDO => 'warning',
+                        Inscricao::STATUS_CONFIRMADA => 'success',
+                        Inscricao::STATUS_CANCELADA => 'danger',
+                        default => 'gray',
+                    })
+                    ->extraCellAttributes($cell),
+                TextColumn::make('igreja')
+                    ->label('Igreja / Regional')
+                    ->html()
+                    ->state(fn (Inscricao $record): string => self::igrejaRegionalBadge($record))
                     ->searchable()
-                    ->sortable()
                     ->extraCellAttributes($cell),
                 TextColumn::make('tamanho_camiseta')
                     ->label('Camiseta')
@@ -69,23 +89,6 @@ class InscricaosTable
                     ->trueColor('success')
                     ->falseColor('danger')
                     ->sortable()
-                    ->extraCellAttributes($cell),
-                TextColumn::make('igreja')
-                    ->label('Igreja / Regional')
-                    ->html()
-                    ->state(fn (Inscricao $record): string => self::igrejaRegionalBadge($record))
-                    ->searchable()
-                    ->extraCellAttributes($cell),
-                TextColumn::make('status')
-                    ->label('Status')
-                    ->badge()
-                    ->formatStateUsing(fn ($state) => Inscricao::statusOptions()[$state] ?? ucfirst((string) $state))
-                    ->color(fn (string $state): string => match ($state) {
-                        Inscricao::STATUS_AGUARDANDO => 'warning',
-                        Inscricao::STATUS_CONFIRMADA => 'success',
-                        Inscricao::STATUS_CANCELADA => 'danger',
-                        default => 'gray',
-                    })
                     ->extraCellAttributes($cell),
             ])
             ->filters([

@@ -6,6 +6,7 @@ use App\Models\Order;
 use App\Services\Cart;
 use App\Services\MercadoPagoService;
 use App\Services\OrderNotifier;
+use App\Support\LojaRetiradaConfig;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -29,6 +30,11 @@ class CheckoutController extends Controller
             'items' => $this->cart->items(),
             'total' => $this->cart->total(),
             'mercadoPagoEnabled' => $this->mercadoPago->isConfigured(),
+            'retirada' => [
+                'local' => LojaRetiradaConfig::local(),
+                'instrucoes' => LojaRetiradaConfig::instrucoes(),
+                'horarios' => LojaRetiradaConfig::horariosAtivos(),
+            ],
         ]);
     }
 
@@ -81,13 +87,14 @@ class CheckoutController extends Controller
             $checkoutUrl = $this->mercadoPago->createPreference($order);
 
             if ($checkoutUrl) {
+                $this->notifier->notifyCustomerCreated($order);
+
                 return redirect()->away($checkoutUrl);
             }
         }
 
         // Sem MercadoPago configurado: registra como pedido manual.
         $order->update(['payment_method' => 'manual']);
-        $this->notifier->confirmCustomer($order);
         $this->cart->clear();
 
         return redirect()->route('checkout.success', ['ref' => $order->reference]);
@@ -98,19 +105,21 @@ class CheckoutController extends Controller
         $order = $this->resolveOrder($request);
 
         if ($order && $request->filled('payment_id')) {
-            $wasPaid = $order->status === 'pago';
             $approved = $request->query('status') === 'approved';
 
-            $order->update([
-                'payment_method' => 'mercadopago',
-                'payment_status' => $request->query('status', 'approved'),
-                'payment_id' => $request->query('payment_id'),
-                'status' => $approved ? 'pago' : $order->status,
-            ]);
-
-            // Confirmação ao cliente apenas quando o pagamento é aprovado (uma vez).
-            if ($approved && ! $wasPaid) {
-                $this->notifier->confirmCustomer($order);
+            if ($approved && ! $order->pagamentoConfirmado()) {
+                $order->update([
+                    'payment_method' => 'mercadopago',
+                    'payment_status' => $request->query('status', 'approved'),
+                    'payment_id' => $request->query('payment_id'),
+                    'status' => Order::statusPosPagamento(),
+                ]);
+            } else {
+                $order->update([
+                    'payment_method' => 'mercadopago',
+                    'payment_status' => $request->query('status', $order->payment_status),
+                    'payment_id' => $request->query('payment_id'),
+                ]);
             }
         }
 

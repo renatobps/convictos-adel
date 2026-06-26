@@ -4,14 +4,12 @@ namespace App\Http\Controllers;
 
 use App\Models\Order;
 use App\Services\MercadoPagoService;
-use App\Services\OrderNotifier;
 use Illuminate\Http\Request;
 
 class MercadoPagoWebhookController extends Controller
 {
     public function __construct(
         protected MercadoPagoService $mercadoPago,
-        protected OrderNotifier $notifier,
     ) {
     }
 
@@ -28,17 +26,20 @@ class MercadoPagoWebhookController extends Controller
 
                 if ($order) {
                     $status = $payment['status'] ?? null;
-                    $wasPaid = $order->status === 'pago';
 
-                    $order->update([
-                        'payment_method' => 'mercadopago',
-                        'payment_status' => $status,
-                        'payment_id' => (string) $paymentId,
-                        'status' => $status === 'approved' ? 'pago' : $order->status,
-                    ]);
-
-                    if ($status === 'approved' && ! $wasPaid) {
-                        $this->notifier->confirmCustomer($order);
+                    if ($status === 'approved' && ! $order->pagamentoConfirmado()) {
+                        $order->update([
+                            'payment_method' => 'mercadopago',
+                            'payment_status' => $status,
+                            'payment_id' => (string) $paymentId,
+                            'status' => Order::statusPosPagamento(),
+                        ]);
+                    } else {
+                        $order->update([
+                            'payment_method' => 'mercadopago',
+                            'payment_status' => $status,
+                            'payment_id' => (string) $paymentId,
+                        ]);
                     }
                 }
             }

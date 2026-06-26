@@ -16,9 +16,9 @@ Recebemos o seu pedido **{{ $order->reference }}**. Obrigado por vestir a convic
 **Total: R$ {{ number_format((float) $order->total, 2, ',', '.') }}**
 
 @if($order->payment_method === 'manual')
-Seu pedido foi registrado. Nossa equipe entrará em contato pelo e-mail ou WhatsApp informado para combinar o **pagamento e a entrega**.
-@elseif($order->status === 'pago')
-Pagamento **confirmado**! Já estamos preparando o seu pedido.
+Seu pedido foi registrado. Nossa equipe entrará em contato pelo e-mail ou WhatsApp informado para combinar o pagamento. A retirada é na {{ \App\Support\LojaRetiradaConfig::local() }}.
+@elseif($order->pagamentoConfirmado())
+Pagamento **confirmado**! Seu pedido está em separação e em breve ficará pronto para retirada.
 @else
 Assim que o pagamento for confirmado, atualizaremos o status do seu pedido.
 @endif

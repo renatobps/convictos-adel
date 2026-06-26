@@ -28,9 +28,10 @@
         <div class="field">
           <label>WhatsApp / Telefone</label>
           <input type="tel" name="customer_phone" class="form-input" placeholder="(99) 99999-9999" inputmode="numeric" maxlength="15" data-phone value="{{ old('customer_phone') }}">
+          <p class="field-hint">Recomendado — enviamos a confirmação do pedido por WhatsApp.</p>
         </div>
         <div class="field">
-          <label>Observações (tamanho, ponto de entrega, etc.)</label>
+          <label>Observações (tamanho, observações extras, etc.)</label>
           <textarea name="notes" class="form-input" rows="3">{{ old('notes') }}</textarea>
         </div>
 
@@ -44,6 +45,21 @@
       </form>
 
       <aside class="checkout-summary">
+        <div class="checkout-pickup">
+          <span class="checkout-pickup-label">Retirada</span>
+          <h3>{{ $retirada['local'] }}</h3>
+          <p class="checkout-pickup-text">{{ $retirada['instrucoes'] }}</p>
+          @if(count($retirada['horarios']))
+            <ul class="checkout-pickup-hours">
+              @foreach($retirada['horarios'] as $horario)
+                <li>{{ \App\Support\LojaRetiradaConfig::formatarHorario($horario) }}</li>
+              @endforeach
+            </ul>
+          @else
+            <p class="checkout-pickup-text">Horários de retirada em breve.</p>
+          @endif
+        </div>
+
         <h3>Resumo do pedido</h3>
         @foreach($items as $item)
           <div class="summary-row">

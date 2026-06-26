@@ -53,8 +53,14 @@ return [
         'text_endpoint' => env('EVOLUTION_API_TEXT_ENDPOINT', '/message/sendText/{instance}'),
         'media_endpoint' => env('EVOLUTION_API_MEDIA_ENDPOINT', '/message/sendMedia/{instance}'),
         'buttons_endpoint' => env('EVOLUTION_API_BUTTONS_ENDPOINT', '/message/sendButtons/{instance}'),
+        'location_endpoint' => env('EVOLUTION_API_LOCATION_ENDPOINT', '/message/sendLocation/{instance}'),
         'enquete_footer' => env('EVOLUTION_API_ENQUETE_FOOTER', 'CONVICTOS UM 2027'),
         'pos_inscricao_image_url' => env('EVOLUTION_API_POS_INSCRICAO_IMAGE_URL'),
+        'webhook_url' => env('WHATSAPP_WEBHOOK_URL', env('EVOLUTION_WEBHOOK_URL')),
+    ],
+
+    'enquete' => [
+        'agradecimento' => env('ENQUETE_AGRADECIMENTO_MSG', 'Obrigado pela sua resposta! ✅ Registramos: *{resposta}*'),
     ],
 
 ];

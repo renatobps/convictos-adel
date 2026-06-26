@@ -65,6 +65,14 @@
 .checkout-form{display:flex;flex-direction:column;gap:22px;}
 .checkout-form textarea.form-input{resize:vertical;font-family:'DM Sans',sans-serif;}
 .checkout-note{font-size:12px;color:var(--muted);line-height:1.7;margin-top:4px;}
+.field-hint{font-size:12px;color:var(--muted);line-height:1.6;margin-top:8px;}
+.checkout-pickup{background:rgba(207,49,54,0.08);border:1px solid rgba(207,49,54,0.25);padding:20px;margin-bottom:24px;}
+.checkout-pickup-label{display:block;font-family:'Oswald',sans-serif;font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--red-lt);margin-bottom:8px;}
+.checkout-pickup h3{font-family:'Anton',sans-serif;font-size:22px;color:#fff;margin:0 0 10px;line-height:1.1;}
+.checkout-pickup-text{font-size:13px;color:#9AA3C2;line-height:1.7;margin:0;}
+.checkout-pickup-hours{list-style:none;margin:14px 0 0;padding:0;display:flex;flex-direction:column;gap:8px;}
+.checkout-pickup-hours li{font-family:'Oswald',sans-serif;font-size:13px;color:#fff;letter-spacing:0.5px;padding-left:14px;position:relative;}
+.checkout-pickup-hours li::before{content:'';position:absolute;left:0;top:50%;transform:translateY(-50%);width:6px;height:6px;border-radius:50%;background:var(--red);}
 .checkout-summary{background:var(--navy-mid);border:1px solid rgba(255,255,255,0.08);padding:28px;}
 .checkout-summary h3{font-family:'Anton',sans-serif;font-size:20px;color:#fff;margin-bottom:20px;}
 .summary-row{display:flex;justify-content:space-between;gap:14px;font-size:13px;color:#9AA3C2;padding:10px 0;border-bottom:1px solid rgba(255,255,255,0.06);line-height:1.5;}

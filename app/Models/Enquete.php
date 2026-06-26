@@ -15,6 +15,7 @@ class Enquete extends Model
         'pergunta',
         'opcoes',
         'ativa',
+        'mensagem_agradecimento',
         'notificacao_grupo_id',
     ];
 

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\MidiaPublica;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
 
@@ -81,6 +82,6 @@ class Product extends Model
             return asset($this->image);
         }
 
-        return \Illuminate\Support\Facades\Storage::disk('public')->url($this->image);
+        return MidiaPublica::urlPublica($this->image);
     }
 }

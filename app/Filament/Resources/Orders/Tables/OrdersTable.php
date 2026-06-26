@@ -34,9 +34,9 @@ class OrdersTable
                     ->formatStateUsing(fn ($state) => Order::STATUSES[$state] ?? $state)
                     ->color(fn (string $state): string => match ($state) {
                         'pendente' => 'warning',
-                        'pago' => 'success',
-                        'enviado' => 'info',
-                        'entregue' => 'success',
+                        'em_separacao' => 'info',
+                        'pronto_retirada' => 'success',
+                        'retirado' => 'success',
                         'cancelado' => 'danger',
                         default => 'gray',
                     }),

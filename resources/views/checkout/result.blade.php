@@ -12,9 +12,9 @@
         Obrigado! Seu pedido foi registrado com sucesso.
         @if($order) A referência do seu pedido é <strong>{{ $order->reference }}</strong>.@endif
         @if($order && $order->payment_method === 'manual')
-          Nossa equipe entrará em contato pelo e-mail/WhatsApp informado para combinar o pagamento e a entrega.
+          Nossa equipe entrará em contato pelo e-mail/WhatsApp informado para combinar o pagamento. A retirada é na {{ \App\Support\LojaRetiradaConfig::local() }} nos horários informados no checkout.
         @else
-          Você receberá a confirmação por e-mail.
+          Você receberá a confirmação por e-mail e WhatsApp (se informado). Retire seus produtos na {{ \App\Support\LojaRetiradaConfig::local() }} nos horários disponíveis.
         @endif
       </p>
     @elseif($type === 'pending')

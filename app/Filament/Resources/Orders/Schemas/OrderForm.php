@@ -34,14 +34,9 @@ class OrderForm
                             ->label('Telefone / WhatsApp')
                             ->tel(),
                     ]),
-                Section::make('Pagamento e status')
+                Section::make('Informações de pagamento')
                     ->columns(2)
                     ->schema([
-                        Select::make('status')
-                            ->label('Status do pedido')
-                            ->options(Order::STATUSES)
-                            ->default('pendente')
-                            ->required(),
                         TextInput::make('total')
                             ->label('Total')
                             ->prefix('R$')
@@ -54,11 +49,28 @@ class OrderForm
                                 'mercadopago' => 'MercadoPago',
                                 'pix' => 'PIX',
                                 'manual' => 'Manual / Combinar',
-                            ]),
+                            ])
+                            ->native(false),
                         TextInput::make('payment_status')
                             ->label('Status do pagamento'),
                         TextInput::make('payment_id')
                             ->label('ID do pagamento (MercadoPago)')
+                            ->columnSpanFull(),
+                    ]),
+                Section::make('Informações de entrega')
+                    ->columns(2)
+                    ->schema([
+                        Select::make('status')
+                            ->label('Status do pedido')
+                            ->options(Order::STATUSES)
+                            ->default('pendente')
+                            ->required()
+                            ->helperText('Fluxo: Pendente → Pedido em separação (pagamento confirmado) → Pronto para retirada → Retirado.')
+                            ->native(false)
+                            ->columnSpanFull(),
+                        Textarea::make('notes')
+                            ->label('Observações')
+                            ->rows(3)
                             ->columnSpanFull(),
                     ]),
                 Section::make('Itens do pedido')
@@ -90,9 +102,6 @@ class OrderForm
                                     ->numeric(),
                             ]),
                     ]),
-                Textarea::make('notes')
-                    ->label('Observações')
-                    ->columnSpanFull(),
             ]);
     }
 }

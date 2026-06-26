@@ -6,7 +6,7 @@
         $conectado = $this->conectado;
         $dadosInstancia = $this->dadosInstancia;
         $erros = $this->erros;
-        $atividades = $this->atividades;
+        $atividades = $this->atividadesPaginadas;
     @endphp
 
     <style>
@@ -20,11 +20,25 @@
             display: flex;
             flex-wrap: wrap;
             gap: 1rem;
-            align-items: stretch;
+            align-items: flex-start;
         }
         .wpp-col {
             flex: 1 1 100%;
             min-width: 0;
+        }
+        .wpp-col--stack {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            align-self: stretch;
+        }
+        .wpp-col--stack > .wpp-card {
+            flex: 0 0 auto;
+            height: auto;
+        }
+        .wpp-col--stack > .wpp-card--fill {
+            flex: 1 1 auto;
+            min-height: 0;
         }
         @media (min-width: 992px) {
             .wpp-col--half {
@@ -38,7 +52,6 @@
             border-radius: 4px;
             overflow: hidden;
             box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-            height: 100%;
             display: flex;
             flex-direction: column;
         }
@@ -83,9 +96,10 @@
         }
         .wpp-card-body {
             padding: 1.25rem;
-            flex: 1;
+            flex: 1 1 auto;
             display: flex;
             flex-direction: column;
+            min-height: 0;
         }
         .wpp-card-body--flush {
             padding: 0;
@@ -124,6 +138,7 @@
             display: flex;
             flex-direction: column;
             gap: 0.5rem;
+            flex-shrink: 0;
         }
         .wpp-btn {
             width: 100%;
@@ -261,8 +276,103 @@
             color: #374151;
             line-height: 1.45;
             word-break: break-word;
+            flex: 1;
+            min-width: 0;
         }
         .dark .wpp-atividade-texto { color: #d4d4d8; }
+        .wpp-atividade-resumo {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+        .wpp-atividade-resumo__label { font-weight: 600; }
+        .wpp-atividade-ver-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 2rem;
+            height: 2rem;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            background: #fff;
+            color: #2563eb;
+            cursor: pointer;
+            flex-shrink: 0;
+            transition: background 0.15s ease, border-color 0.15s ease;
+        }
+        .wpp-atividade-ver-btn:hover { background: #eff6ff; border-color: #93c5fd; }
+        .dark .wpp-atividade-ver-btn {
+            background: rgb(39 39 42);
+            border-color: rgb(63 63 70);
+            color: #93c5fd;
+        }
+        .dark .wpp-atividade-ver-btn:hover { background: rgb(30 58 138 / 0.25); }
+        .wpp-modal-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 50;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+            background: rgb(0 0 0 / 0.45);
+        }
+        .wpp-modal {
+            width: 100%;
+            max-width: 32rem;
+            max-height: min(85vh, 36rem);
+            background: #fff;
+            border-radius: 10px;
+            box-shadow: 0 20px 40px rgb(0 0 0 / 0.18);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        .dark .wpp-modal {
+            background: rgb(24 24 27);
+            border: 1px solid rgb(63 63 70);
+        }
+        .wpp-modal__header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.75rem;
+            padding: 1rem 1.15rem;
+            border-bottom: 1px solid #e5e7eb;
+            font-weight: 700;
+            font-size: 0.95rem;
+            color: #111827;
+        }
+        .dark .wpp-modal__header { border-bottom-color: rgb(63 63 70); color: #f4f4f5; }
+        .wpp-modal__close {
+            border: 0;
+            background: transparent;
+            color: #6b7280;
+            font-size: 1.35rem;
+            line-height: 1;
+            cursor: pointer;
+            padding: 0.15rem 0.35rem;
+            border-radius: 4px;
+        }
+        .wpp-modal__close:hover { background: #f3f4f6; color: #111827; }
+        .dark .wpp-modal__close:hover { background: rgb(63 63 70); color: #f4f4f5; }
+        .wpp-modal__body {
+            padding: 1rem 1.15rem;
+            overflow-y: auto;
+            font-size: 0.875rem;
+            line-height: 1.55;
+            color: #374151;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+        .dark .wpp-modal__body { color: #d4d4d8; }
+        .wpp-modal__destino {
+            padding: 0 1.15rem 1rem;
+            font-size: 0.78rem;
+            color: #6b7280;
+        }
+        .dark .wpp-modal__destino { color: #a1a1aa; }
         .wpp-atividade-destino {
             display: block;
             font-size: 0.75rem;
@@ -275,12 +385,44 @@
             font-size: 0.875rem;
             color: #6c757d;
         }
+        .wpp-pagination {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.75rem 1.25rem;
+            border-top: 1px solid #f1f3f5;
+            font-size: 0.82rem;
+        }
+        .dark .wpp-pagination { border-top-color: rgb(39 39 42); }
+        .wpp-pager {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .wpp-pager__btn {
+            border: 1px solid #d1d5db;
+            background: #fff;
+            color: #374151;
+            border-radius: 6px;
+            padding: 0.4rem 0.8rem;
+            font-size: 0.8rem;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .wpp-pager__btn:hover:not(:disabled) { background: #f3f4f6; }
+        .wpp-pager__btn:disabled { opacity: 0.45; cursor: not-allowed; }
+        .dark .wpp-pager__btn { background: rgb(39 39 42); border-color: rgb(63 63 70); color: #e4e4e7; }
+        .dark .wpp-pager__btn:hover:not(:disabled) { background: rgb(63 63 70); }
+        .wpp-pager__info { font-size: 0.78rem; color: #6b7280; white-space: nowrap; }
+        .dark .wpp-pager__info { color: #a1a1aa; }
+        [x-cloak] { display: none !important; }
     </style>
 
     <div class="wpp-page">
-        {{-- Linha 1: Status + QR --}}
         <div class="wpp-row">
-            <div class="wpp-col wpp-col--half">
+            <div class="wpp-col wpp-col--half wpp-col--stack">
                 <section class="wpp-card">
                     <h2 class="wpp-card-header">Status da Conexão</h2>
                     <div class="wpp-card-body">
@@ -331,10 +473,8 @@
                         </div>
                     </div>
                 </section>
-            </div>
 
-            <div class="wpp-col wpp-col--half">
-                <section class="wpp-card">
+                <section class="wpp-card wpp-card--fill">
                     <h2 class="wpp-card-header wpp-card-header--plain">QR Code de Conexão</h2>
                     <div class="wpp-card-body">
                         @if($qrCode !== '')
@@ -354,57 +494,133 @@
                     </div>
                 </section>
             </div>
-        </div>
 
-        {{-- Linha 2: Teste --}}
-        <section class="wpp-card">
-            <h2 class="wpp-card-header wpp-card-header--teste">Enviar Mensagem de Teste</h2>
-            <div class="wpp-card-body">
-                <form wire:submit="enviarTeste" class="wpp-test-form">
-                    <div class="wpp-field">
-                        <label for="numero_teste" class="wpp-field-label">Número (com DDD)</label>
-                        <input type="text" id="numero_teste" class="wpp-field-input" wire:model="numero_teste" placeholder="61993640457">
-                    </div>
-                    <div class="wpp-field wpp-field--msg">
-                        <label for="mensagem_teste" class="wpp-field-label">Mensagem</label>
-                        <input type="text" id="mensagem_teste" class="wpp-field-input" wire:model="mensagem_teste">
-                    </div>
-                    <div class="wpp-field wpp-field--btn">
-                        <button type="submit" class="wpp-btn wpp-btn--teste" wire:loading.attr="disabled" wire:target="enviarTeste">
-                            <span wire:loading.remove wire:target="enviarTeste">Enviar</span>
-                            <span wire:loading wire:target="enviarTeste">…</span>
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </section>
-
-        {{-- Linha 3: Atividades --}}
-        <section class="wpp-card">
-            <h2 class="wpp-card-header wpp-card-header--atividades">
-                <span aria-hidden="true">📄</span>
-                Últimas Atividades
-            </h2>
-            <div class="wpp-card-body wpp-card-body--flush">
-                @if(count($atividades) === 0)
-                    <p class="wpp-empty">Nenhuma atividade registrada ainda.</p>
-                @else
-                    @foreach($atividades as $atividade)
-                        <div class="wpp-atividade-item">
-                            <span @class([
-                                'wpp-atividade-hora',
-                                'wpp-atividade-hora--erro' => ($atividade['status'] ?? '') === 'erro',
-                            ])>{{ $atividade['hora'] }}</span>
-                            <div class="wpp-atividade-texto">
-                                {{ $atividade['texto'] }}
-                                @if(($atividade['tipo'] ?? '') === 'mensagem' && filled($atividade['destinatario'] ?? null))
-                                    <span class="wpp-atividade-destino">Para: {{ $atividade['destinatario'] }}</span>
-                                @endif
+            <div class="wpp-col wpp-col--half wpp-col--stack">
+                <section class="wpp-card">
+                    <h2 class="wpp-card-header wpp-card-header--teste">Enviar Mensagem de Teste</h2>
+                    <div class="wpp-card-body">
+                        <form wire:submit="enviarTeste" class="wpp-test-form">
+                            <div class="wpp-field">
+                                <label for="numero_teste" class="wpp-field-label">Número (com DDD)</label>
+                                <input type="text" id="numero_teste" class="wpp-field-input" wire:model="numero_teste" placeholder="61993640457">
                             </div>
-                        </div>
-                    @endforeach
-                @endif
+                            <div class="wpp-field wpp-field--msg">
+                                <label for="mensagem_teste" class="wpp-field-label">Mensagem</label>
+                                <input type="text" id="mensagem_teste" class="wpp-field-input" wire:model="mensagem_teste">
+                            </div>
+                            <div class="wpp-field wpp-field--btn">
+                                <button type="submit" class="wpp-btn wpp-btn--teste" wire:loading.attr="disabled" wire:target="enviarTeste">
+                                    <span wire:loading.remove wire:target="enviarTeste">Enviar</span>
+                                    <span wire:loading wire:target="enviarTeste">…</span>
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </section>
+
+                <section class="wpp-card wpp-card--fill">
+                    <h2 class="wpp-card-header wpp-card-header--atividades">
+                        <span aria-hidden="true">📄</span>
+                        Últimas Atividades
+                    </h2>
+                    <div
+                        class="wpp-card-body wpp-card-body--flush"
+                        x-data="{
+                            modalOpen: false,
+                            modalTexto: '',
+                            modalDestino: '',
+                            abrirMensagem(texto, destino) {
+                                this.modalTexto = texto;
+                                this.modalDestino = destino || '';
+                                this.modalOpen = true;
+                            },
+                            fecharModal() { this.modalOpen = false; }
+                        }"
+                        @keydown.escape.window="fecharModal()"
+                    >
+                        @if($atividades->isEmpty())
+                            <p class="wpp-empty">Nenhuma atividade registrada ainda.</p>
+                        @else
+                            @foreach($atividades as $atividade)
+                                <div class="wpp-atividade-item">
+                                    <span @class([
+                                        'wpp-atividade-hora',
+                                        'wpp-atividade-hora--erro' => ($atividade['status'] ?? '') === 'erro',
+                                    ])>{{ $atividade['hora'] }}</span>
+                                    <div class="wpp-atividade-texto">
+                                        @if(($atividade['tipo'] ?? '') === 'mensagem')
+                                            <div class="wpp-atividade-resumo">
+                                                <span class="wpp-atividade-resumo__label">Mensagem WhatsApp</span>
+                                                <button
+                                                    type="button"
+                                                    class="wpp-atividade-ver-btn"
+                                                    title="Ver mensagem completa"
+                                                    aria-label="Ver mensagem completa"
+                                                    @click="abrirMensagem(@js($atividade['texto']), @js($atividade['destinatario'] ?? ''))"
+                                                >
+                                                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                                        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                                                    </svg>
+                                                </button>
+                                            </div>
+                                            @if(filled($atividade['destinatario'] ?? null))
+                                                <span class="wpp-atividade-destino">Para: {{ $atividade['destinatario'] }}</span>
+                                            @endif
+                                        @else
+                                            {{ $atividade['texto'] }}
+                                        @endif
+                                    </div>
+                                </div>
+                            @endforeach
+                            @if($atividades->hasPages())
+                                <div class="wpp-pagination">
+                                    <div>
+                                        Exibindo {{ $atividades->firstItem() ?? 0 }}–{{ $atividades->lastItem() ?? 0 }} de {{ $atividades->total() }}
+                                    </div>
+                                    <div class="wpp-pager">
+                                        <button type="button" class="wpp-pager__btn" wire:click="paginaAnteriorAtividades" @disabled($atividades->onFirstPage())>‹ Anterior</button>
+                                        <span class="wpp-pager__info">Página {{ $atividades->currentPage() }} de {{ $atividades->lastPage() }}</span>
+                                        <button type="button" class="wpp-pager__btn" wire:click="proximaPaginaAtividades" @disabled(! $atividades->hasMorePages())>Próxima ›</button>
+                                    </div>
+                                </div>
+                            @endif
+
+                            <div
+                                x-show="modalOpen"
+                                x-cloak
+                                x-transition:enter="transition ease-out duration-200"
+                                x-transition:enter-start="opacity-0"
+                                x-transition:enter-end="opacity-100"
+                                x-transition:leave="transition ease-in duration-150"
+                                x-transition:leave-start="opacity-100"
+                                x-transition:leave-end="opacity-0"
+                                class="wpp-modal-overlay"
+                                @click.self="fecharModal()"
+                            >
+                                <div
+                                    class="wpp-modal"
+                                    role="dialog"
+                                    aria-modal="true"
+                                    aria-labelledby="wpp-modal-titulo"
+                                    x-transition:enter="transition ease-out duration-200"
+                                    x-transition:enter-start="opacity-0 scale-95"
+                                    x-transition:enter-end="opacity-100 scale-100"
+                                    @click.stop
+                                >
+                                    <div class="wpp-modal__header">
+                                        <span id="wpp-modal-titulo">Mensagem enviada</span>
+                                        <button type="button" class="wpp-modal__close" @click="fecharModal()" aria-label="Fechar">&times;</button>
+                                    </div>
+                                    <div class="wpp-modal__body" x-text="modalTexto"></div>
+                                    <div class="wpp-modal__destino" x-show="modalDestino !== ''">
+                                        Para: <span x-text="modalDestino"></span>
+                                    </div>
+                                </div>
+                            </div>
+                        @endif
+                    </div>
+                </section>
             </div>
-        </section>
+        </div>
     </div>
 </x-filament-panels::page>

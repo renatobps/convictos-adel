@@ -41,6 +41,12 @@ class EnqueteForm
                 Toggle::make('ativa')
                     ->label('Enquete ativa')
                     ->default(true),
+                Textarea::make('mensagem_agradecimento')
+                    ->label('Mensagem de agradecimento (WhatsApp)')
+                    ->rows(3)
+                    ->placeholder('Obrigado pela sua resposta! ✅ Registramos: *{resposta}*')
+                    ->helperText('Enviada automaticamente após cada resposta. Variáveis: {resposta}, {nome}, {pergunta}, {titulo}. Deixe vazio para usar o padrão do sistema.')
+                    ->columnSpanFull(),
             ]);
     }
 }

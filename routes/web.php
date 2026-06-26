@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\CheckoutController;
+use App\Http\Controllers\EvolutionWebhookController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\IngressoController;
 use App\Http\Controllers\InscricaoController;
@@ -38,3 +39,10 @@ Route::get('/checkout/pendente', [CheckoutController::class, 'pending'])->name('
 // Webhook MercadoPago
 Route::post('/webhooks/mercadopago', [MercadoPagoWebhookController::class, 'handle'])
     ->name('webhooks.mercadopago');
+
+// Webhook Evolution API (enquetes / mensagens recebidas)
+Route::post('/webhook', [EvolutionWebhookController::class, 'handle'])
+    ->name('webhooks.evolution');
+Route::post('/webhook/{event}', [EvolutionWebhookController::class, 'handle'])
+    ->where('event', '.*')
+    ->name('webhooks.evolution.event');

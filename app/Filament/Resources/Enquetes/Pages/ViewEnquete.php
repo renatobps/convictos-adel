@@ -9,9 +9,12 @@ use App\Services\EnqueteService;
 use Filament\Actions\EditAction;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\ViewRecord;
+use Livewire\WithPagination;
 
 class ViewEnquete extends ViewRecord
 {
+    use WithPagination;
+
     protected static string $resource = EnqueteResource::class;
 
     protected string $view = 'filament.resources.enquetes.view-enquete';
@@ -108,8 +111,11 @@ class ViewEnquete extends ViewRecord
     protected function getViewData(): array
     {
         return [
-            'envios' => $this->record->envios()->latest()->limit(50)->get(),
-            'respostas' => $this->record->respostas()->latest()->limit(50)->get(),
+            'envios' => $this->record->envios()->latest()->paginate(5, ['*'], 'enviosPage'),
+            'respostas' => $this->record->respostas()->latest()->paginate(5, ['*'], 'respostasPage'),
+            'metricas' => EnqueteService::metricasRespostas($this->record),
+            'totalRespostas' => $this->record->respostas()->count(),
+            'totalEnvios' => $this->record->envios()->where('status', 'enviada')->count(),
             'grupos' => NotificacaoGrupo::query()->orderBy('nome')->get(),
             'inscritos' => Inscricao::query()
                 ->with('igrejaRel')

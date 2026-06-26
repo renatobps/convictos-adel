@@ -116,17 +116,135 @@
         .dark .rel-reg-card__foot b { color: #34d399; }
         .rel-table-wrap { overflow-x: auto; }
         .rel-table { width: 100%; border-collapse: collapse; font-size: 0.84rem; }
+        .rel-table--detalhamento {
+            table-layout: fixed;
+            --rel-col-nome: 20%;
+            --rel-col-dirigente: 22%;
+            --rel-col-total: 7%;
+            --rel-col-conf: 9%;
+            --rel-col-aguard: 9%;
+            --rel-col-cancel: 9%;
+            --rel-col-arrec: 14%;
+            --rel-col-pct: 10%;
+        }
+        .rel-table--detalhamento th,
+        .rel-table--detalhamento td { box-sizing: border-box; }
         .rel-table th, .rel-table td { padding: 0.65rem 1rem; text-align: left; border-bottom: 1px solid #f3f4f6; }
         .dark .rel-table th, .dark .rel-table td { border-bottom-color: rgb(39 39 42); }
         .rel-table th { font-size: 0.72rem; text-transform: uppercase; letter-spacing: .04em; color: #6b7280; background: #f9fafb; font-weight: 700; }
         .dark .rel-table th { background: rgb(39 39 42); color: #a1a1aa; }
         .rel-table tbody tr:hover { background: #f9fafb; }
         .dark .rel-table tbody tr:hover { background: rgb(39 39 42); }
+        .rel-accordion-panel-row:hover { background: transparent !important; }
+        .dark .rel-accordion-panel-row:hover { background: transparent !important; }
         .rel-table .num { text-align: right; font-variant-numeric: tabular-nums; }
         .rel-table .regional-row td {
             background: #eff6ff; font-weight: 700; color: #1e40af; border-bottom: 1px solid #dbeafe;
         }
         .dark .rel-table .regional-row td { background: rgb(30 58 138 / 0.25); color: #93c5fd; border-bottom-color: rgb(30 58 138 / 0.4); }
+        .rel-accordion-trigger { cursor: pointer; user-select: none; }
+        .rel-accordion-trigger:hover td { filter: brightness(0.97); }
+        .dark .rel-accordion-trigger:hover td { filter: brightness(1.08); }
+        .rel-accordion-icon {
+            display: inline-block; width: 1.1rem; margin-right: 0.45rem;
+            font-size: 0.72rem; line-height: 1; vertical-align: middle;
+        }
+        .rel-accordion-panel-cell {
+            padding: 0 !important; border-bottom: none !important; background: transparent !important;
+        }
+        .rel-accordion-panel {
+            display: grid; grid-template-rows: 0fr;
+            transition: grid-template-rows 250ms ease;
+        }
+        .rel-accordion-panel.is-open { grid-template-rows: 1fr; }
+        .rel-accordion-panel-inner { overflow: hidden; min-height: 0; }
+        .rel-accordion-igreja-row {
+            display: grid;
+            grid-template-columns:
+                var(--rel-col-nome)
+                var(--rel-col-dirigente)
+                var(--rel-col-total)
+                var(--rel-col-conf)
+                var(--rel-col-aguard)
+                var(--rel-col-cancel)
+                var(--rel-col-arrec)
+                var(--rel-col-pct);
+            border-bottom: 1px solid #f3f4f6;
+        }
+        .dark .rel-accordion-igreja-row { border-bottom-color: rgb(39 39 42); }
+        .rel-accordion-igreja-row:hover { background: #f9fafb; }
+        .dark .rel-accordion-igreja-row:hover { background: rgb(39 39 42); }
+        .rel-accordion-igreja-cell {
+            box-sizing: border-box;
+            padding: 0.65rem 1rem;
+            text-align: left;
+            min-width: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .rel-accordion-igreja-cell--indent { padding-left: 2.25rem; }
+        .rel-accordion-igreja-cell.num { text-align: right; font-variant-numeric: tabular-nums; }
+        .rel-accordion-group.is-open .regional-row td { border-bottom-color: transparent; }
+        .rel-detalhamento-desktop { display: block; }
+        .rel-detalhamento-mobile.rel-mob-acc {
+            display: none;
+            flex-direction: column;
+            gap: 0.65rem;
+            padding: 0.75rem;
+        }
+        .rel-mob-regional {
+            border: 1px solid #e5e7eb; border-radius: 10px; overflow: hidden; background: #fff;
+        }
+        .dark .rel-mob-regional { background: rgb(24 24 27); border-color: rgb(63 63 70); }
+        .rel-mob-regional__trigger {
+            width: 100%; border: 0; background: #eff6ff; color: #1e40af; cursor: pointer;
+            padding: 0.85rem 1rem; text-align: left; font-weight: 700; font-size: 0.92rem;
+            display: flex; align-items: flex-start; justify-content: space-between; gap: 0.75rem;
+        }
+        .dark .rel-mob-regional__trigger { background: rgb(30 58 138 / 0.25); color: #93c5fd; }
+        .rel-mob-regional__title { display: flex; align-items: center; gap: 0.45rem; min-width: 0; }
+        .rel-mob-regional__stats {
+            display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.45rem 0.75rem;
+            margin-top: 0.65rem; font-size: 0.74rem; font-weight: 600; color: #374151;
+        }
+        .dark .rel-mob-regional__stats { color: #d4d4d8; }
+        .rel-mob-regional__stat { display: flex; flex-direction: column; gap: 0.1rem; }
+        .rel-mob-regional__stat--full { grid-column: 1 / -1; }
+        .rel-mob-regional__stat span { font-size: 0.68rem; color: #6b7280; font-weight: 600; text-transform: uppercase; letter-spacing: .03em; }
+        .rel-mob-regional__stat b { font-size: 0.95rem; font-variant-numeric: tabular-nums; color: #111827; }
+        .dark .rel-mob-regional__stat b { color: #f4f4f5; }
+        .rel-mob-regional__panel {
+            display: grid; grid-template-rows: 0fr; transition: grid-template-rows 250ms ease;
+        }
+        .rel-mob-regional__panel.is-open { grid-template-rows: 1fr; }
+        .rel-mob-regional__panel-inner { overflow: hidden; min-height: 0; }
+        .rel-mob-regional__igrejas {
+            display: flex; flex-direction: column; gap: 0.55rem; padding: 0.65rem;
+            border-top: 1px solid #dbeafe; background: #f9fafb;
+        }
+        .dark .rel-mob-regional__igrejas { border-top-color: rgb(30 58 138 / 0.4); background: rgb(39 39 42); }
+        .rel-mob-igreja {
+            border: 1px solid #e5e7eb; border-radius: 8px; padding: 0.75rem; background: #fff;
+        }
+        .dark .rel-mob-igreja { background: rgb(24 24 27); border-color: rgb(63 63 70); }
+        .rel-mob-igreja__nome { font-weight: 700; font-size: 0.88rem; color: #111827; margin: 0; }
+        .dark .rel-mob-igreja__nome { color: #f4f4f5; }
+        .rel-mob-igreja__dirigente { font-size: 0.76rem; color: #6b7280; margin: 0.2rem 0 0.65rem; }
+        .dark .rel-mob-igreja__dirigente { color: #a1a1aa; }
+        .rel-mob-igreja__grid {
+            display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.45rem 0.75rem;
+        }
+        .rel-mob-igreja__item { display: flex; flex-direction: column; gap: 0.08rem; }
+        .rel-mob-igreja__item label {
+            font-size: 0.66rem; font-weight: 700; text-transform: uppercase; letter-spacing: .03em; color: #9ca3af;
+        }
+        .rel-mob-igreja__item span { font-size: 0.84rem; font-weight: 600; font-variant-numeric: tabular-nums; color: #111827; }
+        .dark .rel-mob-igreja__item span { color: #f4f4f5; }
+        .rel-mob-igreja__item--full { grid-column: 1 / -1; }
+        @media (max-width: 767px) {
+            .rel-detalhamento-desktop { display: none !important; }
+            .rel-detalhamento-mobile.rel-mob-acc { display: flex; }
+        }
         .rel-badge {
             display: inline-block; padding: 0.15rem 0.5rem; border-radius: 999px; font-size: 0.72rem; font-weight: 700;
         }
@@ -315,8 +433,19 @@
                 @if(count($igrejasPorRegional) === 0)
                     <p class="rel-empty">Nenhuma igreja encontrada para os filtros selecionados.</p>
                 @else
-                    <div class="rel-table-wrap">
-                        <table class="rel-table">
+                    {{-- Desktop: tabela accordion --}}
+                    <div class="rel-detalhamento-desktop rel-table-wrap">
+                        <table class="rel-table rel-table--detalhamento">
+                            <colgroup>
+                                <col style="width: var(--rel-col-nome)">
+                                <col style="width: var(--rel-col-dirigente)">
+                                <col style="width: var(--rel-col-total)">
+                                <col style="width: var(--rel-col-conf)">
+                                <col style="width: var(--rel-col-aguard)">
+                                <col style="width: var(--rel-col-cancel)">
+                                <col style="width: var(--rel-col-arrec)">
+                                <col style="width: var(--rel-col-pct)">
+                            </colgroup>
                             <thead>
                                 <tr>
                                     <th>Igreja / Regional</th>
@@ -329,10 +458,30 @@
                                     <th class="num">% conf.</th>
                                 </tr>
                             </thead>
-                            <tbody>
-                                @foreach($igrejasPorRegional as $grupo)
-                                    <tr class="regional-row">
-                                        <td colspan="2">{{ $grupo['regional_nome'] }}</td>
+                            @foreach($igrejasPorRegional as $grupo)
+                                <tbody
+                                    x-data="{ open: false }"
+                                    :class="{ 'is-open': open }"
+                                    class="rel-accordion-group"
+                                >
+                                    <tr
+                                        class="regional-row rel-accordion-trigger"
+                                        role="button"
+                                        tabindex="0"
+                                        :aria-expanded="open"
+                                        @click="open = ! open"
+                                        @keydown.enter.prevent="open = ! open"
+                                        @keydown.space.prevent="open = ! open"
+                                    >
+                                        <td>
+                                            <span
+                                                class="rel-accordion-icon"
+                                                x-text="open ? '▼' : '▶'"
+                                                aria-hidden="true"
+                                            ></span>
+                                            {{ $grupo['regional_nome'] }}
+                                        </td>
+                                        <td></td>
                                         <td class="num"><strong>{{ $grupo['total'] }}</strong></td>
                                         <td class="num"><strong>{{ $grupo['confirmadas'] }}</strong></td>
                                         <td class="num"><strong>{{ $grupo['aguardando'] }}</strong></td>
@@ -340,21 +489,114 @@
                                         <td class="num"><strong>R$ {{ number_format($grupo['valor_arrecadado'], 2, ',', '.') }}</strong></td>
                                         <td class="num">—</td>
                                     </tr>
-                                    @foreach($grupo['igrejas'] as $igreja)
-                                        <tr>
-                                            <td style="padding-left:1.75rem">{{ $igreja['bairro'] }}</td>
-                                            <td>{{ $igreja['dirigente'] }}</td>
-                                            <td class="num">{{ $igreja['total'] }}</td>
-                                            <td class="num">{{ $igreja['confirmadas'] }}</td>
-                                            <td class="num">{{ $igreja['aguardando'] }}</td>
-                                            <td class="num">{{ $igreja['canceladas'] }}</td>
-                                            <td class="num">R$ {{ number_format($igreja['valor_arrecadado'], 2, ',', '.') }}</td>
-                                            <td class="num">{{ $igreja['percentual_confirmadas'] }}%</td>
-                                        </tr>
-                                    @endforeach
-                                @endforeach
-                            </tbody>
+                                    <tr class="rel-accordion-panel-row">
+                                        <td colspan="8" class="rel-accordion-panel-cell">
+                                            <div class="rel-accordion-panel" :class="{ 'is-open': open }">
+                                                <div class="rel-accordion-panel-inner">
+                                                    @foreach($grupo['igrejas'] as $igreja)
+                                                        <div class="rel-accordion-igreja-row">
+                                                            <div class="rel-accordion-igreja-cell rel-accordion-igreja-cell--indent">{{ $igreja['bairro'] }}</div>
+                                                            <div class="rel-accordion-igreja-cell">{{ $igreja['dirigente'] }}</div>
+                                                            <div class="rel-accordion-igreja-cell num">{{ $igreja['total'] }}</div>
+                                                            <div class="rel-accordion-igreja-cell num">{{ $igreja['confirmadas'] }}</div>
+                                                            <div class="rel-accordion-igreja-cell num">{{ $igreja['aguardando'] }}</div>
+                                                            <div class="rel-accordion-igreja-cell num">{{ $igreja['canceladas'] }}</div>
+                                                            <div class="rel-accordion-igreja-cell num">R$ {{ number_format($igreja['valor_arrecadado'], 2, ',', '.') }}</div>
+                                                            <div class="rel-accordion-igreja-cell num">{{ $igreja['percentual_confirmadas'] }}%</div>
+                                                        </div>
+                                                    @endforeach
+                                                </div>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            @endforeach
                         </table>
+                    </div>
+
+                    {{-- Mobile: cards accordion --}}
+                    <div class="rel-detalhamento-mobile rel-mob-acc">
+                        @foreach($igrejasPorRegional as $grupo)
+                            <div
+                                x-data="{ open: false }"
+                                class="rel-mob-regional"
+                                :class="{ 'is-open': open }"
+                            >
+                                <button
+                                    type="button"
+                                    class="rel-mob-regional__trigger"
+                                    :aria-expanded="open"
+                                    @click="open = ! open"
+                                >
+                                    <div style="flex:1;min-width:0">
+                                        <div class="rel-mob-regional__title">
+                                            <span class="rel-accordion-icon" x-text="open ? '▼' : '▶'" aria-hidden="true"></span>
+                                            <span>{{ $grupo['regional_nome'] }}</span>
+                                        </div>
+                                        <div class="rel-mob-regional__stats">
+                                            <div class="rel-mob-regional__stat">
+                                                <span>Total</span>
+                                                <b>{{ $grupo['total'] }}</b>
+                                            </div>
+                                            <div class="rel-mob-regional__stat">
+                                                <span>Confirmadas</span>
+                                                <b>{{ $grupo['confirmadas'] }}</b>
+                                            </div>
+                                            <div class="rel-mob-regional__stat">
+                                                <span>Aguardando</span>
+                                                <b>{{ $grupo['aguardando'] }}</b>
+                                            </div>
+                                            <div class="rel-mob-regional__stat">
+                                                <span>Canceladas</span>
+                                                <b>{{ $grupo['canceladas'] }}</b>
+                                            </div>
+                                            <div class="rel-mob-regional__stat rel-mob-regional__stat--full">
+                                                <span>Arrecadado</span>
+                                                <b>R$ {{ number_format($grupo['valor_arrecadado'], 2, ',', '.') }}</b>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </button>
+                                <div class="rel-mob-regional__panel" :class="{ 'is-open': open }">
+                                    <div class="rel-mob-regional__panel-inner">
+                                        <div class="rel-mob-regional__igrejas">
+                                            @foreach($grupo['igrejas'] as $igreja)
+                                                <article class="rel-mob-igreja">
+                                                    <p class="rel-mob-igreja__nome">{{ $igreja['bairro'] }}</p>
+                                                    <p class="rel-mob-igreja__dirigente">{{ $igreja['dirigente'] ?: '—' }}</p>
+                                                    <div class="rel-mob-igreja__grid">
+                                                        <div class="rel-mob-igreja__item">
+                                                            <label>Total</label>
+                                                            <span>{{ $igreja['total'] }}</span>
+                                                        </div>
+                                                        <div class="rel-mob-igreja__item">
+                                                            <label>Confirmadas</label>
+                                                            <span>{{ $igreja['confirmadas'] }}</span>
+                                                        </div>
+                                                        <div class="rel-mob-igreja__item">
+                                                            <label>Aguardando</label>
+                                                            <span>{{ $igreja['aguardando'] }}</span>
+                                                        </div>
+                                                        <div class="rel-mob-igreja__item">
+                                                            <label>Canceladas</label>
+                                                            <span>{{ $igreja['canceladas'] }}</span>
+                                                        </div>
+                                                        <div class="rel-mob-igreja__item rel-mob-igreja__item--full">
+                                                            <label>Arrecadado</label>
+                                                            <span>R$ {{ number_format($igreja['valor_arrecadado'], 2, ',', '.') }}</span>
+                                                        </div>
+                                                        <div class="rel-mob-igreja__item">
+                                                            <label>% confirmadas</label>
+                                                            <span>{{ $igreja['percentual_confirmadas'] }}%</span>
+                                                        </div>
+                                                    </div>
+                                                </article>
+                                            @endforeach
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        @endforeach
                     </div>
                 @endif
             </div>
