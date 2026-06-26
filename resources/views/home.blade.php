@@ -3,19 +3,51 @@
 @section('title', 'CONVICTOS UM 2027 — Conferência de Jovens')
 
 @section('content')
+@if($dataEvento)
+<style>
+  .countdown-float {
+    position: fixed; right: 18px; bottom: 18px; z-index: 900;
+    background: linear-gradient(135deg, #0b1f4b, #15306e);
+    color: #fff; border-radius: 14px; padding: 12px 14px;
+    box-shadow: 0 12px 30px rgba(0,0,0,.35); border: 1px solid rgba(255,255,255,.08);
+    font-family: 'Oswald', sans-serif; text-align: center; animation: cdfloat 3s ease-in-out infinite;
+  }
+  @keyframes cdfloat { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
+  .countdown-label { font-size: .62rem; letter-spacing: 1.5px; text-transform: uppercase; color: #f59e0b; font-weight: 700; margin-bottom: 6px; }
+  .countdown-grid { display: flex; gap: 8px; }
+  .countdown-box { display: flex; flex-direction: column; min-width: 38px; background: rgba(255,255,255,.06); border-radius: 8px; padding: 5px 4px; }
+  .countdown-num { font-size: 1.25rem; font-weight: 700; line-height: 1; }
+  .countdown-unit { font-size: .58rem; text-transform: uppercase; letter-spacing: .5px; color: #cbd5e1; margin-top: 2px; }
+  @media (max-width: 600px) {
+    .countdown-float { right: 10px; bottom: 10px; padding: 9px 10px; }
+    .countdown-box { min-width: 32px; }
+    .countdown-num { font-size: 1.05rem; }
+  }
+</style>
+<div class="countdown-float" id="countdown" data-event="{{ $dataEvento->format('Y-m-d\TH:i:s') }}" aria-live="polite">
+  <div class="countdown-label">Contagem regressiva</div>
+  <div class="countdown-grid">
+    <div class="countdown-box"><span class="countdown-num" data-cd="days">--</span><span class="countdown-unit">dias</span></div>
+    <div class="countdown-box"><span class="countdown-num" data-cd="hours">--</span><span class="countdown-unit">h</span></div>
+    <div class="countdown-box"><span class="countdown-num" data-cd="mins">--</span><span class="countdown-unit">min</span></div>
+    <div class="countdown-box"><span class="countdown-num" data-cd="secs">--</span><span class="countdown-unit">s</span></div>
+  </div>
+</div>
+@endif
+
 <!-- HERO -->
 <div class="hero">
   <img src="{{ asset('assets/logos/chama-cor.png') }}" alt="" class="hero-flame">
   <img src="{{ asset('assets/logos/chama-cor.png') }}" alt="" class="hero-flame2">
   <div class="hero-content">
-    <span class="hero-eyebrow">Conferência de Jovens · Ministério Madureira · Luziânia</span>
+    <span class="hero-eyebrow">Conferência de Jovens · Assembleia de Deus - Ministério Madureira · Luziânia</span>
     <img src="{{ asset('assets/logos/um-escudo-azul.png') }}" alt="CONVICTOS UM 2027" class="hero-logo">
     <div class="hero-banner">
       <span>UMA GERAÇÃO QUE <span class="red">NÃO RECUA</span></span>
     </div>
     <p class="hero-verse">"Para que todos sejam um." — <strong>João 17:21</strong></p>
     <div class="btn-row">
-      <a href="#inscricao" class="btn-primary">Quero saber mais</a>
+      <a href="#inscricao" class="btn-primary">Faça sua inscrição</a>
       <a href="#sobre" class="btn-outline">Saiba Mais</a>
     </div>
   </div>
@@ -113,25 +145,6 @@
   </div>
 </section>
 
-@if($featured->count() > 0)
-<!-- PRODUTOS EM DESTAQUE -->
-<section class="id-section">
-  <div class="id-intro">
-    <span class="label">Loja Oficial</span>
-    <h2 class="title">VISTA A <span class="stroke">CONVICÇÃO</span></h2>
-    <p>A linha oficial Convictos UM 2027. Garanta a sua peça e leve a fé com identidade.</p>
-  </div>
-  <div class="shop-grid" style="margin-top:50px;">
-    @foreach($featured as $product)
-      @include('store.partials.product-card', ['product' => $product])
-    @endforeach
-  </div>
-  <div style="text-align:center;margin-top:40px;">
-    <a href="{{ route('store.index') }}" class="btn-primary">Ver toda a loja</a>
-  </div>
-</section>
-@endif
-
 <!-- GERAÇÃO -->
 <section class="geracao">
   <div class="geracao-inner">
@@ -167,14 +180,14 @@
   </div>
 </section>
 
-<!-- CTA / NOVIDADES -->
+<!-- CTA / INSCRIÇÃO -->
 <section class="cta-section" id="inscricao">
   <img src="{{ asset('assets/logos/chama-cor.png') }}" alt="" class="cta-bg-flame">
   <div class="cta-inner">
-    <span class="label">Fique por dentro</span>
+    <span class="label">Inscrição</span>
     <div class="cta-title">SEJA<br>CONVICTO</div>
     <div class="cta-verse">"Para que todos sejam um."</div>
-    <p class="cta-sub">Deixe seu contato e seja o primeiro a saber quando as inscrições do Convictos UM 2027 forem abertas. Novidades e avisos em primeira mão.</p>
+    <p class="cta-sub">Garanta sua vaga na Conferência Convictos UM 2027. Após o cadastro, você receberá orientações no WhatsApp.</p>
 
     @if(session('inscricao_success'))
       <div class="flash flash-success" style="position:static;margin:0 0 20px;">{{ session('inscricao_success') }}</div>
@@ -186,17 +199,113 @@
       </div>
     @endif
 
-    <form method="POST" action="{{ route('inscricao.store') }}">
+    <form method="POST" action="{{ route('inscricao.store') }}" id="form-inscricao">
       @csrf
       <div class="form-group">
         <input type="text" name="nome" class="form-input" placeholder="Seu nome completo" value="{{ old('nome') }}" required>
-        <input type="email" name="email" class="form-input" placeholder="Seu melhor e-mail" value="{{ old('email') }}" required>
-        <input type="tel" name="whatsapp" class="form-input" placeholder="(99) 99999-9999" inputmode="numeric" maxlength="15" data-phone value="{{ old('whatsapp') }}">
-        <input type="text" name="cidade" class="form-input" placeholder="Cidade (opcional)" value="{{ old('cidade') }}">
-        <input type="text" name="igreja" class="form-input" placeholder="Igreja (opcional)" value="{{ old('igreja') }}">
+        <input type="email" name="email" class="form-input" placeholder="E-mail (opcional)" value="{{ old('email') }}">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+          <input type="number" name="idade" class="form-input" placeholder="Idade" min="10" max="120" value="{{ old('idade') }}" required>
+          <input type="tel" name="whatsapp" class="form-input" placeholder="(99) 99999-9999" inputmode="numeric" maxlength="15" data-phone value="{{ old('whatsapp') }}" required>
+        </div>
+        <select name="tamanho_camiseta" class="form-input" required>
+          <option value="" disabled {{ old('tamanho_camiseta') ? '' : 'selected' }}>Tamanho da camiseta oficial</option>
+          @foreach(\App\Models\Inscricao::tamanhoCamisetaOptions() as $value => $label)
+            <option value="{{ $value }}" @selected(old('tamanho_camiseta') === $value)>{{ $label }}</option>
+          @endforeach
+        </select>
+        @if($igrejas->isEmpty())
+          <select name="igreja_id" class="form-input" disabled>
+            <option value="">Nenhuma igreja cadastrada ainda</option>
+          </select>
+          <p class="cta-note" style="margin-top:8px;">As igrejas são cadastradas pela equipe no painel administrativo.</p>
+        @else
+          <select name="igreja_id" class="form-input" required>
+            <option value="" disabled {{ old('igreja_id') ? '' : 'selected' }}>Selecione sua igreja</option>
+            @foreach($igrejas as $igreja)
+              <option value="{{ $igreja->id }}" @selected((string) old('igreja_id') === (string) $igreja->id)>{{ $igreja->bairro }}</option>
+            @endforeach
+          </select>
+        @endif
+        <fieldset style="border:none;padding:0;margin:0;">
+          <legend style="font-size:0.85rem;color:rgba(255,255,255,0.7);margin-bottom:8px;">É líder de jovens?</legend>
+          <div style="display:flex;gap:16px;">
+            <label style="display:flex;align-items:center;gap:6px;color:#fff;font-size:0.9rem;">
+              <input type="radio" name="lider" value="sim" @checked(old('lider') === 'sim') required> Sim
+            </label>
+            <label style="display:flex;align-items:center;gap:6px;color:#fff;font-size:0.9rem;">
+              <input type="radio" name="lider" value="nao" @checked(old('lider', 'nao') === 'nao')> Não
+            </label>
+          </div>
+        </fieldset>
       </div>
-      <button class="form-submit" type="submit">Quero receber novidades</button>
+      <button class="form-submit" type="submit" @if($igrejas->isEmpty()) disabled @endif>Fazer minha inscrição</button>
     </form>
+
+    @push('scripts')
+    <script>
+      (function () {
+        var form = document.getElementById('form-inscricao');
+        if (!form) return;
+
+        form.addEventListener('submit', function () {
+          if (form.dataset.enviando === '1') return;
+          form.dataset.enviando = '1';
+
+          var btn = form.querySelector('.form-submit');
+          if (btn) {
+            btn.disabled = true;
+            btn.dataset.original = btn.textContent;
+            btn.textContent = 'Enviando, aguarde...';
+            btn.style.opacity = '0.7';
+            btn.style.cursor = 'wait';
+          }
+        });
+      })();
+    </script>
+    @endpush
+
+    @push('scripts')
+    <script>
+      (function () {
+        var el = document.getElementById('countdown');
+        if (!el) return;
+
+        var alvo = new Date(el.getAttribute('data-event')).getTime();
+        if (isNaN(alvo)) { el.style.display = 'none'; return; }
+
+        var set = function (key, val) {
+          var node = el.querySelector('[data-cd="' + key + '"]');
+          if (node) node.textContent = val;
+        };
+
+        var tick = function () {
+          var resta = alvo - Date.now();
+
+          if (resta <= 0) {
+            set('days', '0'); set('hours', '00'); set('mins', '00'); set('secs', '00');
+            el.querySelector('.countdown-label').textContent = 'É hoje! 🔥';
+            clearInterval(timer);
+            return;
+          }
+
+          var dias = Math.floor(resta / 86400000);
+          var horas = Math.floor((resta % 86400000) / 3600000);
+          var mins = Math.floor((resta % 3600000) / 60000);
+          var secs = Math.floor((resta % 60000) / 1000);
+
+          var pad = function (n) { return (n < 10 ? '0' : '') + n; };
+          set('days', dias);
+          set('hours', pad(horas));
+          set('mins', pad(mins));
+          set('secs', pad(secs));
+        };
+
+        tick();
+        var timer = setInterval(tick, 1000);
+      })();
+    </script>
+    @endpush
     <p class="cta-note">Sem spam. Só avisamos sobre o que importa — a Conferência Definitiva.</p>
     <div class="social-links">
       <a href="#" class="social-link">Instagram</a>

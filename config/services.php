@@ -46,4 +46,15 @@ return [
         'email_admin' => env('MAIL_ADMIN_ADDRESS', env('MAIL_FROM_ADDRESS')),
     ],
 
+    'evolution_api' => [
+        'base_url' => env('WHATSAPP_API_URL', env('EVOLUTION_API_BASE_URL')),
+        'instance_name' => env('WHATSAPP_INSTANCE_NAME', env('EVOLUTION_API_INSTANCE_NAME')),
+        'api_key' => env('WHATSAPP_API_KEY', env('EVOLUTION_API_KEY')),
+        'text_endpoint' => env('EVOLUTION_API_TEXT_ENDPOINT', '/message/sendText/{instance}'),
+        'media_endpoint' => env('EVOLUTION_API_MEDIA_ENDPOINT', '/message/sendMedia/{instance}'),
+        'buttons_endpoint' => env('EVOLUTION_API_BUTTONS_ENDPOINT', '/message/sendButtons/{instance}'),
+        'enquete_footer' => env('EVOLUTION_API_ENQUETE_FOOTER', 'CONVICTOS UM 2027'),
+        'pos_inscricao_image_url' => env('EVOLUTION_API_POS_INSCRICAO_IMAGE_URL'),
+    ],
+
 ];

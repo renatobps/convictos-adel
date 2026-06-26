@@ -15,11 +15,18 @@ class DatabaseSeeder extends Seeder
             [
                 'name' => 'Administrador',
                 'password' => Hash::make('convictos2027'),
+                'is_admin' => true,
             ]
         );
 
         $this->call([
             ProductSeeder::class,
+            InscricaoConfigSeeder::class,
+            CargoSeeder::class,
+            MembroSeeder::class,
+            RegionalSeeder::class,
+            IgrejaSeeder::class,
+            NotificacaoGrupoSeeder::class,
         ]);
     }
 }

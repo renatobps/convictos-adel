@@ -3,6 +3,7 @@
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\HomeController;
+use App\Http\Controllers\IngressoController;
 use App\Http\Controllers\InscricaoController;
 use App\Http\Controllers\MercadoPagoWebhookController;
 use App\Http\Controllers\StoreController;
@@ -11,6 +12,11 @@ use Illuminate\Support\Facades\Route;
 Route::get('/', [HomeController::class, 'index'])->name('home');
 
 Route::post('/inscricao', [InscricaoController::class, 'store'])->name('inscricao.store');
+
+// Ingresso digital (QR Code)
+Route::get('/ingresso/{inscricao:codigo}', [IngressoController::class, 'show'])->name('ingresso.show');
+Route::get('/ingresso/{inscricao:codigo}/qr', [IngressoController::class, 'qr'])->name('ingresso.qr');
+Route::get('/ingresso/{inscricao:codigo}/comprovante.pdf', [IngressoController::class, 'pdf'])->name('ingresso.pdf');
 
 // Loja
 Route::get('/loja', [StoreController::class, 'index'])->name('store.index');

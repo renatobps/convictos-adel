@@ -2,7 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Igreja;
 use App\Models\Product;
+use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
 
 class HomeController extends Controller
 {
@@ -15,6 +18,14 @@ class HomeController extends Controller
             ->take(4)
             ->get();
 
-        return view('home', compact('featured'));
+        $igrejas = Igreja::query()
+            ->with('regional')
+            ->orderBy('bairro')
+            ->get();
+
+        $dataEventoRaw = DB::table('inscricao_meta_configuracoes')->value('data_evento');
+        $dataEvento = $dataEventoRaw ? Carbon::parse($dataEventoRaw)->startOfDay() : null;
+
+        return view('home', compact('featured', 'igrejas', 'dataEvento'));
     }
 }
