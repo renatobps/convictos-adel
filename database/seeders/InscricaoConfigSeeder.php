@@ -13,6 +13,8 @@ class InscricaoConfigSeeder extends Seeder
             DB::table('inscricao_meta_configuracoes')->insert([
                 'meta_total' => 500,
                 'valor_inscricao' => 0,
+                'valor_com_camiseta' => 0,
+                'valor_sem_camiseta' => 0,
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);

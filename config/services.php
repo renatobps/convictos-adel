@@ -36,9 +36,15 @@ return [
     ],
 
     'mercadopago' => [
-        'access_token' => env('MERCADOPAGO_ACCESS_TOKEN'),
-        'public_key' => env('MERCADOPAGO_PUBLIC_KEY'),
-        'sandbox' => env('MERCADOPAGO_SANDBOX', true),
+        // Aceita MP_* (padrão atual) e MERCADOPAGO_* (legado).
+        'access_token' => env('MP_ACCESS_TOKEN', env('MERCADOPAGO_ACCESS_TOKEN')),
+        'public_key' => env('MP_PUBLIC_KEY', env('MERCADOPAGO_PUBLIC_KEY')),
+        'sandbox' => filter_var(env('MP_SANDBOX', env('MERCADOPAGO_SANDBOX', false)), FILTER_VALIDATE_BOOLEAN),
+        'webhook_secret' => env('MP_WEBHOOK_SECRET', env('MERCADOPAGO_WEBHOOK_SECRET')),
+        'statement_descriptor' => env('MP_STATEMENT_DESCRIPTOR', env('MERCADOPAGO_STATEMENT_DESCRIPTOR', 'CONVICTOS')),
+        'currency' => env('MP_CURRENCY', env('MERCADOPAGO_CURRENCY', 'BRL')),
+        // URL pública do webhook (ngrok/produção). Se vazio, usa a rota local.
+        'notification_url' => env('MP_NOTIFICATION_URL', env('MERCADOPAGO_NOTIFICATION_URL')),
     ],
 
     'loja' => [
@@ -50,10 +56,12 @@ return [
         'base_url' => env('WHATSAPP_API_URL', env('EVOLUTION_API_BASE_URL')),
         'instance_name' => env('WHATSAPP_INSTANCE_NAME', env('EVOLUTION_API_INSTANCE_NAME')),
         'api_key' => env('WHATSAPP_API_KEY', env('EVOLUTION_API_KEY')),
-        'text_endpoint' => env('EVOLUTION_API_TEXT_ENDPOINT', '/message/sendText/{instance}'),
-        'media_endpoint' => env('EVOLUTION_API_MEDIA_ENDPOINT', '/message/sendMedia/{instance}'),
-        'buttons_endpoint' => env('EVOLUTION_API_BUTTONS_ENDPOINT', '/message/sendButtons/{instance}'),
-        'location_endpoint' => env('EVOLUTION_API_LOCATION_ENDPOINT', '/message/sendLocation/{instance}'),
+        // Evolution GO (whatsmeow) — ver https://evogo.arkcoredev.com/swagger/index.html
+        'text_endpoint' => env('EVOLUTION_API_TEXT_ENDPOINT', '/send/text'),
+        'media_endpoint' => env('EVOLUTION_API_MEDIA_ENDPOINT', '/send/media'),
+        'buttons_endpoint' => env('EVOLUTION_API_BUTTONS_ENDPOINT', '/send/button'),
+        'location_endpoint' => env('EVOLUTION_API_LOCATION_ENDPOINT', '/send/location'),
+        'poll_endpoint' => env('EVOLUTION_API_POLL_ENDPOINT', '/send/poll'),
         'enquete_footer' => env('EVOLUTION_API_ENQUETE_FOOTER', 'CONVICTOS UM 2027'),
         'pos_inscricao_image_url' => env('EVOLUTION_API_POS_INSCRICAO_IMAGE_URL'),
         'webhook_url' => env('WHATSAPP_WEBHOOK_URL', env('EVOLUTION_WEBHOOK_URL')),

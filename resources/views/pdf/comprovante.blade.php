@@ -28,6 +28,11 @@
         .qr { width: 200px; height: 200px; }
         .foot { text-align: center; color: #6b7280; font-size: 10px; padding: 14px 20px; border-top: 1px dashed #e5e7eb; }
         .verse { font-style: italic; color: #0b1f4b; margin: 6px 0 0; }
+        .notice { margin: 0 20px 14px; padding: 10px 12px; border-radius: 8px; font-size: 10px; line-height: 1.45; text-align: left; }
+        .notice strong { display: block; margin-bottom: 3px; font-size: 10px; text-transform: uppercase; letter-spacing: 0.4px; }
+        .notice p { margin: 0; }
+        .notice-pix { background-color: #fff7ed; border: 1px solid #fdba74; color: #9a3412; }
+        .notice-camiseta { background-color: #eff6ff; border: 1px solid #93c5fd; color: #1e3a8a; }
         td { vertical-align: top; }
     </style>
 </head>
@@ -88,12 +93,28 @@
                                 <table width="100%" cellpadding="0" cellspacing="0">
                                     <tr>
                                         <td width="50%">
-                                            <p class="section-title">Camiseta</p>
-                                            <p class="value">{{ $inscricao->tamanho_camiseta ?: '—' }}</p>
+                                            <p class="section-title">Tipo</p>
+                                            <p class="value">{{ $inscricao->tipoIngressoLabel() }}</p>
                                         </td>
                                         <td width="50%">
                                             <p class="section-title">Idade</p>
                                             <p class="value">{{ $inscricao->idade ?: '—' }}</p>
+                                        </td>
+                                    </tr>
+                                </table>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td style="padding-bottom: 14px;">
+                                <table width="100%" cellpadding="0" cellspacing="0">
+                                    <tr>
+                                        <td width="50%">
+                                            <p class="section-title">Camiseta</p>
+                                            <p class="value">{{ $inscricao->comCamiseta() ? ($inscricao->tamanho_camiseta ?: '—') : 'Sem camiseta' }}</p>
+                                        </td>
+                                        <td width="50%">
+                                            <p class="section-title">Valor</p>
+                                            <p class="value">{{ $inscricao->valor !== null ? 'R$ '.number_format((float) $inscricao->valor, 2, ',', '.') : '—' }}</p>
                                         </td>
                                     </tr>
                                 </table>
@@ -109,6 +130,20 @@
                 </td>
             </tr>
         </table>
+
+        @if($inscricao->estaPendente())
+            <div class="notice notice-pix">
+                <strong>Pagamento via PIX</strong>
+                <p>Sua inscrição está Pendente. Realize o PIX{{ $inscricao->valor !== null ? ' de R$ '.number_format((float) $inscricao->valor, 2, ',', '.') : '' }} com o coordenador da sua regional. O status será atualizado para Pago após a confirmação.</p>
+            </div>
+        @endif
+
+        @if($inscricao->comCamiseta())
+            <div class="notice notice-camiseta">
+                <strong>Camiseta oficial</strong>
+                <p>Assim que a camiseta estiver disponível, seu líder de jovens receberá uma notificação informando que ela está pronta para retirada.</p>
+            </div>
+        @endif
 
         <div class="foot">
             <p style="margin: 0;">Este comprovante é pessoal e intransferível. Guarde-o até o dia do evento.</p>

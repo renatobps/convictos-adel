@@ -36,12 +36,14 @@
         </div>
 
         <button type="submit" class="btn-primary" style="width:100%;">
-          @if($mercadoPagoEnabled) Pagar com MercadoPago @else Confirmar pedido @endif
+          @if($mercadoPagoEnabled) Continuar para o pagamento @else Confirmar pedido @endif
         </button>
 
-        @unless($mercadoPagoEnabled)
+        @if($mercadoPagoEnabled)
+          <p class="checkout-note">Na próxima etapa você paga com cartão, Pix ou boleto sem sair do site (Checkout Transparente). Após a confirmação, retire no local indicado.</p>
+        @else
           <p class="checkout-note">O pagamento online ainda não está ativo. Seu pedido será registrado e nossa equipe entrará em contato para combinar o pagamento.</p>
-        @endunless
+        @endif
       </form>
 
       <aside class="checkout-summary">

@@ -75,6 +75,7 @@
 .checkout-pickup-hours li::before{content:'';position:absolute;left:0;top:50%;transform:translateY(-50%);width:6px;height:6px;border-radius:50%;background:var(--red);}
 .checkout-summary{background:var(--navy-mid);border:1px solid rgba(255,255,255,0.08);padding:28px;}
 .checkout-summary h3{font-family:'Anton',sans-serif;font-size:20px;color:#fff;margin-bottom:20px;}
+.mp-brick-wrap{min-height:320px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);padding:12px 8px 20px;border-radius:4px;}
 .summary-row{display:flex;justify-content:space-between;gap:14px;font-size:13px;color:#9AA3C2;padding:10px 0;border-bottom:1px solid rgba(255,255,255,0.06);line-height:1.5;}
 .summary-total{display:flex;justify-content:space-between;align-items:center;margin-top:18px;font-family:'Oswald',sans-serif;font-weight:600;}
 .summary-total span:first-child{font-size:12px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);}

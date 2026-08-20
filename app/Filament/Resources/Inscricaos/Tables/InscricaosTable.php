@@ -77,8 +77,15 @@ class InscricaosTable
                     ->state(fn (Inscricao $record): string => self::igrejaRegionalBadge($record))
                     ->searchable()
                     ->extraCellAttributes($cell),
+                TextColumn::make('tipo_ingresso')
+                    ->label('Tipo')
+                    ->formatStateUsing(fn (?string $state): string => Inscricao::tipoIngressoOptions()[$state] ?? ($state ?: '—'))
+                    ->badge()
+                    ->color(fn (?string $state): string => $state === Inscricao::TIPO_SEM_CAMISETA ? 'gray' : 'info')
+                    ->extraCellAttributes($cell),
                 TextColumn::make('tamanho_camiseta')
                     ->label('Camiseta')
+                    ->formatStateUsing(fn (?string $state, Inscricao $record): string => $record->comCamiseta() ? ($state ?: '—') : 'Sem camiseta')
                     ->badge()
                     ->extraCellAttributes($cell),
                 IconColumn::make('camiseta_retirada')
@@ -95,6 +102,9 @@ class InscricaosTable
                 SelectFilter::make('status')
                     ->label('Status')
                     ->options(Inscricao::statusOptions()),
+                SelectFilter::make('tipo_ingresso')
+                    ->label('Tipo')
+                    ->options(Inscricao::tipoIngressoOptions()),
                 SelectFilter::make('regional')
                     ->label('Regional')
                     ->searchable()
@@ -133,6 +143,8 @@ class InscricaosTable
                     ->tooltip('Editar'),
                 ActionGroup::make([
                     self::detalhesAction(),
+                    self::marcarComoPagoAction(),
+                    self::alterarStatusAction(),
                     self::verIngressoAction(),
                     self::comprovantePdfAction(),
                     self::enviarWhatsAppAction(),
@@ -167,14 +179,16 @@ class InscricaosTable
                 $nome = trim($data['retirado_por']);
                 $agora = now();
 
-                $records->each(fn (Inscricao $record) => $record->update([
-                    'camiseta_retirada' => true,
-                    'camiseta_retirada_em' => $agora,
-                    'camiseta_retirada_por' => $nome,
-                ]));
+                $atualizados = $records
+                    ->filter(fn (Inscricao $record) => $record->comCamiseta())
+                    ->each(fn (Inscricao $record) => $record->update([
+                        'camiseta_retirada' => true,
+                        'camiseta_retirada_em' => $agora,
+                        'camiseta_retirada_por' => $nome,
+                    ]));
 
                 Notification::make()
-                    ->title($records->count().' camiseta(s) marcada(s) como retirada por '.$nome.'.')
+                    ->title($atualizados->count().' camiseta(s) marcada(s) como retirada por '.$nome.'.')
                     ->success()
                     ->send();
             })
@@ -231,6 +245,7 @@ class InscricaosTable
                 'statusLabel' => Inscricao::statusOptions()[$record->status] ?? (string) $record->status,
             ]))
             ->extraModalFooterActions([
+                self::marcarComoPagoAction(),
                 self::alterarStatusAction(),
                 self::marcarRetiradaAction(),
                 self::desmarcarRetiradaAction(),
@@ -256,10 +271,34 @@ class InscricaosTable
                     ->native(false),
             ])
             ->action(function (Inscricao $record, array $data): void {
+                $statusAnterior = $record->status;
                 $record->update(['status' => $data['status']]);
+                $record->notificarSePagamentoConfirmado($statusAnterior);
 
                 Notification::make()
                     ->title('Status atualizado para '.(Inscricao::statusOptions()[$data['status']] ?? $data['status']).'.')
+                    ->success()
+                    ->send();
+            });
+    }
+
+    private static function marcarComoPagoAction(): Action
+    {
+        return Action::make('marcarComoPago')
+            ->label('Marcar como pago (PIX)')
+            ->icon(Heroicon::OutlinedBanknotes)
+            ->color('success')
+            ->visible(fn (Inscricao $record): bool => $record->estaPendente())
+            ->requiresConfirmation()
+            ->modalHeading('Confirmar recebimento do PIX')
+            ->modalDescription('Confirma que o valor da inscrição foi recebido via PIX? O status será alterado para Pago e o inscrito poderá ser notificado.')
+            ->action(function (Inscricao $record): void {
+                $statusAnterior = $record->status;
+                $record->update(['status' => Inscricao::STATUS_PAGO]);
+                $record->notificarSePagamentoConfirmado($statusAnterior);
+
+                Notification::make()
+                    ->title('Inscrição marcada como paga.')
                     ->success()
                     ->send();
             });
@@ -271,7 +310,7 @@ class InscricaosTable
             ->label('Marcar camiseta como retirada')
             ->icon(Heroicon::OutlinedCheckCircle)
             ->color('success')
-            ->visible(fn (Inscricao $record): bool => ! $record->camiseta_retirada)
+            ->visible(fn (Inscricao $record): bool => $record->comCamiseta() && ! $record->camiseta_retirada)
             ->modalHeading('Confirmar retirada da camiseta')
             ->modalWidth(Width::Medium)
             ->schema([
@@ -301,7 +340,7 @@ class InscricaosTable
             ->label('Desmarcar retirada da camiseta')
             ->icon(Heroicon::OutlinedXCircle)
             ->color('gray')
-            ->visible(fn (Inscricao $record): bool => (bool) $record->camiseta_retirada)
+            ->visible(fn (Inscricao $record): bool => $record->comCamiseta() && (bool) $record->camiseta_retirada)
             ->requiresConfirmation()
             ->action(function (Inscricao $record): void {
                 $record->update([
@@ -323,7 +362,7 @@ class InscricaosTable
     private static function colunasExport(): array
     {
         return [
-            'Código', 'Nome', 'WhatsApp', 'E-mail', 'Idade', 'Camiseta',
+            'Código', 'Nome', 'WhatsApp', 'E-mail', 'Idade', 'Tipo', 'Camiseta', 'Valor',
             'Camiseta retirada', 'Igreja', 'Regional', 'Líder', 'Status', 'Data',
         ];
     }
@@ -339,7 +378,9 @@ class InscricaosTable
             (string) $record->whatsapp,
             (string) $record->email,
             (string) $record->idade,
-            (string) $record->tamanho_camiseta,
+            $record->tipoIngressoLabel(),
+            $record->comCamiseta() ? (string) $record->tamanho_camiseta : '—',
+            $record->valor !== null ? number_format((float) $record->valor, 2, ',', '.') : '',
             $record->camiseta_retirada ? 'Sim' : 'Não',
             self::nomeIgreja($record),
             $record->igrejaRel?->regional?->abreviacao() ?? '—',
@@ -475,7 +516,7 @@ class InscricaosTable
                 Textarea::make('mensagem')
                     ->label('Mensagem')
                     ->rows(5)
-                    ->placeholder('Placeholders: {nome_do_inscrito}, {tamanho_camiseta}')
+                    ->placeholder('Placeholders: {nome_do_inscrito}, {tipo_ingresso}, {tamanho_camiseta}, {valor}')
                     ->required(fn (Get $get): bool => blank($get('arquivo'))),
                 FileUpload::make('arquivo')
                     ->label('Imagem ou anexo (opcional)')

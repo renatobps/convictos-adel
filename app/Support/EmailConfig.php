@@ -289,7 +289,13 @@ class EmailConfig
 
         return strtr($texto, [
             '{nome_do_inscrito}' => (string) $inscricao->nome,
-            '{tamanho_camiseta}' => (string) $inscricao->tamanho_camiseta,
+            '{tamanho_camiseta}' => $inscricao->comCamiseta()
+                ? (string) $inscricao->tamanho_camiseta
+                : 'Sem camiseta',
+            '{tipo_ingresso}' => $inscricao->tipoIngressoLabel(),
+            '{valor}' => $inscricao->valor !== null
+                ? 'R$ '.number_format((float) $inscricao->valor, 2, ',', '.')
+                : '',
             '{igreja}' => (string) $inscricao->igreja,
             '{email}' => (string) $inscricao->email,
             '{status}' => $status,
@@ -334,8 +340,8 @@ class EmailConfig
                 'ativo' => true,
                 'assunto' => 'Inscrição confirmada — Convictos UM 2027',
                 'conteudo' => "<p>A paz do Senhor, <strong>{nome_do_inscrito}</strong>! 🙌</p>"
-                    . "<p>Seu pagamento foi confirmado e sua inscrição no <strong>Convictos UM 2027</strong> está oficialmente validada!</p>"
-                    . "<p><strong>Status:</strong> {status}<br><strong>Camiseta:</strong> {tamanho_camiseta}</p>"
+                    . "<p>Seu pagamento via PIX foi confirmado e sua inscrição no <strong>Convictos UM 2027</strong> está com status <strong>Pago</strong>!</p>"
+                    . "<p><strong>Status:</strong> {status}<br><strong>Tipo:</strong> {tipo_ingresso}<br><strong>Camiseta:</strong> {tamanho_camiseta}<br><strong>Valor:</strong> {valor}</p>"
                     . "<p>Prepare-se para viver um tempo inesquecível na presença de Deus. Nos vemos lá! 🔥</p>",
                 'imagem' => null,
                 'botao_texto' => 'Acessar o site',
@@ -345,11 +351,11 @@ class EmailConfig
 
         return [
             'ativo' => true,
-            'assunto' => 'Recebemos sua inscrição — Convictos UM 2027',
+            'assunto' => 'Inscrição pendente — Convictos UM 2027',
             'conteudo' => "<p>A paz do Senhor, <strong>{nome_do_inscrito}</strong>! 🙌</p>"
-                . "<p>Sua inscrição no <strong>Convictos UM 2027</strong> foi registrada com sucesso!</p>"
-                . "<p>Para concluir, procure seu líder de jovens e realize o pagamento do ingresso com camiseta. Após a confirmação dos dados, você receberá a validação final.</p>"
-                . "<p><strong>Tamanho da camiseta:</strong> {tamanho_camiseta}</p>"
+                . "<p>Sua inscrição no <strong>Convictos UM 2027</strong> foi registrada com status <strong>Pendente</strong>.</p>"
+                . "<p><strong>Pagamento somente via PIX.</strong> Realize o PIX no valor de <strong>{valor}</strong> ({tipo_ingresso}) com o coordenador da sua regional. Assim que o pagamento for confirmado, o status será atualizado para <strong>Pago</strong>.</p>"
+                . "<p><strong>Camiseta:</strong> {tamanho_camiseta}<br><strong>Código:</strong> {codigo}</p>"
                 . "<p>Qualquer dúvida, estamos à disposição. Nos vemos lá! 🔥</p>",
             'imagem' => null,
             'botao_texto' => 'Acessar o site',

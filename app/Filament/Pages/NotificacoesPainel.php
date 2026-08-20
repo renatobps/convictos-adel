@@ -86,7 +86,7 @@ class NotificacoesPainel extends Page
                             Textarea::make('mensagem')
                                 ->label('Mensagem')
                                 ->rows(5)
-                                ->placeholder('Placeholders: {nome_do_inscrito}, {tamanho_camiseta}')
+                                ->placeholder('Placeholders: {nome_do_inscrito}, {tipo_ingresso}, {tamanho_camiseta}, {valor}')
                                 ->required(fn (Get $get): bool => blank($get('arquivo'))),
                             FileUpload::make('arquivo')
                                 ->label('Anexo (opcional)')

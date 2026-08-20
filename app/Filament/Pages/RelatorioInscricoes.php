@@ -3,11 +3,14 @@
 namespace App\Filament\Pages;
 
 use App\Filament\Concerns\RestrictsByRegional;
+use App\Models\Igreja;
+use App\Models\Inscricao;
 use App\Support\InscricaoDashboardStats;
 use BackedEnum;
 use Filament\Support\Enums\Width;
 use Filament\Support\Icons\Heroicon;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Computed;
 use Livewire\WithPagination;
@@ -37,6 +40,10 @@ class RelatorioInscricoes extends \Filament\Pages\Page
 
     public int $perPage = 10;
 
+    public ?int $detalheIgrejaId = null;
+
+    public string $detalheIgrejaNome = '';
+
     public function mount(): void
     {
         $this->resetPage();
@@ -63,6 +70,37 @@ class RelatorioInscricoes extends \Filament\Pages\Page
         $this->filtro_regional_id = null;
         $this->filtro_igreja_id = null;
         $this->resetPage();
+    }
+
+    public function abrirDetalheIgreja(int $igrejaId): void
+    {
+        $igreja = Igreja::query()
+            ->with('regional')
+            ->find($igrejaId);
+
+        if (! $igreja) {
+            return;
+        }
+
+        $user = Auth::user();
+        if ($user && ! $user->isAdmin()) {
+            $scopeIds = $user->regionalScopeIds();
+            if (empty($scopeIds) || ! in_array((int) $igreja->regional_id, $scopeIds, true)) {
+                return;
+            }
+        }
+
+        $this->detalheIgrejaId = $igrejaId;
+        $this->detalheIgrejaNome = $igreja->bairro
+            .($igreja->regional ? ' — '.$igreja->regional->nome : '');
+        unset($this->inscricoesIgrejaDetalhe);
+    }
+
+    public function fecharDetalheIgreja(): void
+    {
+        $this->detalheIgrejaId = null;
+        $this->detalheIgrejaNome = '';
+        unset($this->inscricoesIgrejaDetalhe);
     }
 
     #[Computed]
@@ -115,5 +153,18 @@ class RelatorioInscricoes extends \Filament\Pages\Page
     public function inscricoesRecentes(): LengthAwarePaginator
     {
         return $this->stats->inscricoesRecentes($this->perPage);
+    }
+
+    /**
+     * @return Collection<int, Inscricao>
+     */
+    #[Computed]
+    public function inscricoesIgrejaDetalhe(): Collection
+    {
+        if (! $this->detalheIgrejaId) {
+            return collect();
+        }
+
+        return $this->stats->inscricoesDaIgreja($this->detalheIgrejaId);
     }
 }

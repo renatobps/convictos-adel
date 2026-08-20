@@ -42,10 +42,14 @@ class ConfiguracaoInscricao extends Page
         $config = DB::table('inscricao_meta_configuracoes')->first();
         $metasRegionais = DB::table('inscricao_meta_regionais')->pluck('meta', 'regional_id');
 
+        $valorCom = (float) ($config?->valor_com_camiseta ?? $config?->valor_inscricao ?? 0);
+        $valorSem = (float) ($config?->valor_sem_camiseta ?? 0);
+
         $this->metasData = [
-            'meta_total' => (int) ($config->meta_total ?? 500),
-            'valor_inscricao' => (float) ($config->valor_inscricao ?? 0),
-            'data_evento' => $config->data_evento ?? null,
+            'meta_total' => (int) ($config?->meta_total ?? 500),
+            'valor_com_camiseta' => $valorCom,
+            'valor_sem_camiseta' => $valorSem,
+            'data_evento' => $config?->data_evento ?? null,
             'metas_regionais' => Regional::query()
                 ->orderBy('nome')
                 ->get()
@@ -76,11 +80,6 @@ class ConfiguracaoInscricao extends Page
                                 ->numeric()
                                 ->minValue(1)
                                 ->required(),
-                            TextInput::make('valor_inscricao')
-                                ->label('Valor da inscrição (R$)')
-                                ->numeric()
-                                ->minValue(0)
-                                ->required(),
                             DatePicker::make('data_evento')
                                 ->label('Data do evento')
                                 ->native(false)
@@ -88,6 +87,23 @@ class ConfiguracaoInscricao extends Page
                                 ->closeOnDateSelection()
                                 ->helperText('Usada no contador regressivo da página inicial.')
                                 ->columnSpanFull(),
+                        ])
+                        ->columns(2),
+                    Section::make('Valores da inscrição')
+                        ->description('Valores exibidos no formulário público e usados no cálculo de arrecadação.')
+                        ->schema([
+                            TextInput::make('valor_com_camiseta')
+                                ->label('Valor com camiseta (R$)')
+                                ->numeric()
+                                ->minValue(0)
+                                ->step(0.01)
+                                ->required(),
+                            TextInput::make('valor_sem_camiseta')
+                                ->label('Valor sem camiseta (R$)')
+                                ->numeric()
+                                ->minValue(0)
+                                ->step(0.01)
+                                ->required(),
                         ])
                         ->columns(2),
                     Section::make('Metas por regional')
@@ -103,24 +119,28 @@ class ConfiguracaoInscricao extends Page
         $state = $this->metasForm->getState();
         $data = (array) data_get($state, 'metasData', $state);
 
-        DB::transaction(function () use ($data): void {
+        $valorCom = round((float) $data['valor_com_camiseta'], 2);
+        $valorSem = round((float) $data['valor_sem_camiseta'], 2);
+
+        DB::transaction(function () use ($data, $valorCom, $valorSem): void {
             $configAtual = DB::table('inscricao_meta_configuracoes')->first();
+            $payload = [
+                'meta_total' => (int) $data['meta_total'],
+                'valor_inscricao' => $valorCom,
+                'valor_com_camiseta' => $valorCom,
+                'valor_sem_camiseta' => $valorSem,
+                'data_evento' => $data['data_evento'] ?: null,
+                'updated_at' => now(),
+            ];
+
             if ($configAtual) {
                 DB::table('inscricao_meta_configuracoes')
                     ->where('id', $configAtual->id)
-                    ->update([
-                        'meta_total' => (int) $data['meta_total'],
-                        'valor_inscricao' => round((float) $data['valor_inscricao'], 2),
-                        'data_evento' => $data['data_evento'] ?: null,
-                        'updated_at' => now(),
-                    ]);
+                    ->update($payload);
             } else {
                 DB::table('inscricao_meta_configuracoes')->insert([
-                    'meta_total' => (int) $data['meta_total'],
-                    'valor_inscricao' => round((float) $data['valor_inscricao'], 2),
-                    'data_evento' => $data['data_evento'] ?: null,
+                    ...$payload,
                     'created_at' => now(),
-                    'updated_at' => now(),
                 ]);
             }
 
@@ -137,7 +157,9 @@ class ConfiguracaoInscricao extends Page
         });
 
         AtividadeLogService::registrar(
-            'Salvou metas da inscrição (total: '.(int) $data['meta_total'].', valor: R$ '.number_format((float) $data['valor_inscricao'], 2, ',', '.').')',
+            'Salvou metas da inscrição (total: '.(int) $data['meta_total']
+                .', com camiseta: R$ '.number_format($valorCom, 2, ',', '.')
+                .', sem camiseta: R$ '.number_format($valorSem, 2, ',', '.').')',
             AtividadeLogService::ACAO_CONFIG,
         );
 

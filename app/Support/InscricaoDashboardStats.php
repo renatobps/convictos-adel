@@ -71,7 +71,26 @@ class InscricaoDashboardStats
 
     public function valorInscricao(): float
     {
-        return (float) (DB::table('inscricao_meta_configuracoes')->value('valor_inscricao') ?? 0);
+        return (float) (DB::table('inscricao_meta_configuracoes')->value('valor_com_camiseta')
+            ?? DB::table('inscricao_meta_configuracoes')->value('valor_inscricao')
+            ?? 0);
+    }
+
+    public function valorComCamiseta(): float
+    {
+        return $this->valorInscricao();
+    }
+
+    public function valorSemCamiseta(): float
+    {
+        return (float) (DB::table('inscricao_meta_configuracoes')->value('valor_sem_camiseta') ?? 0);
+    }
+
+    public function valorArrecadadoConfirmadas(): float
+    {
+        return round((float) $this->baseQuery()
+            ->where('status', Inscricao::STATUS_CONFIRMADA)
+            ->sum('valor'), 2);
     }
 
     /** @return array<string, mixed> */
@@ -86,19 +105,23 @@ class InscricaoDashboardStats
         $confirmadas = (int) ($porStatus[Inscricao::STATUS_CONFIRMADA] ?? 0);
         $aguardando = (int) ($porStatus[Inscricao::STATUS_AGUARDANDO] ?? 0);
         $canceladas = (int) ($porStatus[Inscricao::STATUS_CANCELADA] ?? 0);
-        $valorInscricao = $this->valorInscricao();
+        $valorCom = $this->valorComCamiseta();
+        $valorSem = $this->valorSemCamiseta();
         $metaTotal = $this->metaTotal();
+        $valorArrecadado = $this->valorArrecadadoConfirmadas();
 
         return [
             'total' => $total,
             'confirmadas' => $confirmadas,
             'aguardando' => $aguardando,
             'canceladas' => $canceladas,
-            'valor_arrecadado' => round($confirmadas * $valorInscricao, 2),
+            'valor_arrecadado' => $valorArrecadado,
             'percentual_meta' => $metaTotal > 0 ? min(100, (int) round(($total / $metaTotal) * 100)) : 0,
             'percentual_confirmadas' => $total > 0 ? (int) round(($confirmadas / $total) * 100) : 0,
             'meta_total' => $metaTotal,
-            'valor_inscricao' => $valorInscricao,
+            'valor_inscricao' => $valorCom,
+            'valor_com_camiseta' => $valorCom,
+            'valor_sem_camiseta' => $valorSem,
             'por_status' => collect(Inscricao::statusOptions())->map(fn (string $label, string $status) => [
                 'status' => $status,
                 'label' => $label,
@@ -111,9 +134,8 @@ class InscricaoDashboardStats
     public function regionaisCards(): array
     {
         $porRegional = $this->inscricoesPorRegionalQuery()->get()->keyBy('regional_id');
-        $valorInscricao = $this->valorInscricao();
 
-        return $this->regionaisFiltro()->map(function (Regional $regional) use ($porRegional, $valorInscricao) {
+        return $this->regionaisFiltro()->map(function (Regional $regional) use ($porRegional) {
             $data = $porRegional->get((int) $regional->id);
             $total = (int) ($data->total ?? 0);
             $confirmadas = (int) ($data->confirmadas ?? 0);
@@ -124,7 +146,7 @@ class InscricaoDashboardStats
                 'confirmadas' => $confirmadas,
                 'aguardando' => (int) ($data->aguardando ?? 0),
                 'canceladas' => (int) ($data->canceladas ?? 0),
-                'valor_arrecadado' => round($confirmadas * $valorInscricao, 2),
+                'valor_arrecadado' => round((float) ($data->valor_arrecadado ?? 0), 2),
                 'percentual_confirmadas' => $total > 0 ? (int) round(($confirmadas / $total) * 100) : 0,
             ];
         })->values()->all();
@@ -201,7 +223,6 @@ class InscricaoDashboardStats
     public function igrejasPorRegional(): array
     {
         $rows = $this->inscricoesPorIgrejaQuery()->get();
-        $valorInscricao = $this->valorInscricao();
         $regionais = $this->regionaisFiltro()->keyBy('id');
 
         $igrejasSemInscricao = Igreja::query()
@@ -226,7 +247,7 @@ class InscricaoDashboardStats
                 'confirmadas' => (int) $row->confirmadas,
                 'aguardando' => (int) $row->aguardando,
                 'canceladas' => (int) $row->canceladas,
-                'valor_arrecadado' => round((int) $row->confirmadas * $valorInscricao, 2),
+                'valor_arrecadado' => round((float) ($row->valor_arrecadado ?? 0), 2),
                 'percentual_confirmadas' => (int) $row->total > 0
                     ? (int) round(((int) $row->confirmadas / (int) $row->total) * 100)
                     : 0,
@@ -286,6 +307,20 @@ class InscricaoDashboardStats
             ->paginate($perPage);
     }
 
+    /**
+     * @return \Illuminate\Support\Collection<int, Inscricao>
+     */
+    public function inscricoesDaIgreja(int $igrejaId): Collection
+    {
+        $query = Inscricao::query()
+            ->with(['igrejaRel.regional'])
+            ->where('igreja_id', $igrejaId);
+
+        $this->aplicarFiltrosRegionalIgreja($query, 'igrejaRel');
+
+        return $query->orderBy('nome')->get();
+    }
+
     /** @return \Illuminate\Database\Eloquent\Builder<Inscricao> */
     private function baseQuery()
     {
@@ -308,11 +343,13 @@ class InscricaoDashboardStats
                 COUNT(*) as total,
                 SUM(CASE WHEN inscricoes.status = ? THEN 1 ELSE 0 END) as confirmadas,
                 SUM(CASE WHEN inscricoes.status = ? THEN 1 ELSE 0 END) as aguardando,
-                SUM(CASE WHEN inscricoes.status = ? THEN 1 ELSE 0 END) as canceladas',
+                SUM(CASE WHEN inscricoes.status = ? THEN 1 ELSE 0 END) as canceladas,
+                SUM(CASE WHEN inscricoes.status = ? THEN COALESCE(inscricoes.valor, 0) ELSE 0 END) as valor_arrecadado',
                 [
                     Inscricao::STATUS_CONFIRMADA,
                     Inscricao::STATUS_AGUARDANDO,
                     Inscricao::STATUS_CANCELADA,
+                    Inscricao::STATUS_CONFIRMADA,
                 ]
             )
             ->join('igrejas', 'inscricoes.igreja_id', '=', 'igrejas.id')
@@ -333,11 +370,13 @@ class InscricaoDashboardStats
                 COUNT(*) as total,
                 SUM(CASE WHEN inscricoes.status = ? THEN 1 ELSE 0 END) as confirmadas,
                 SUM(CASE WHEN inscricoes.status = ? THEN 1 ELSE 0 END) as aguardando,
-                SUM(CASE WHEN inscricoes.status = ? THEN 1 ELSE 0 END) as canceladas',
+                SUM(CASE WHEN inscricoes.status = ? THEN 1 ELSE 0 END) as canceladas,
+                SUM(CASE WHEN inscricoes.status = ? THEN COALESCE(inscricoes.valor, 0) ELSE 0 END) as valor_arrecadado',
                 [
                     Inscricao::STATUS_CONFIRMADA,
                     Inscricao::STATUS_AGUARDANDO,
                     Inscricao::STATUS_CANCELADA,
+                    Inscricao::STATUS_CONFIRMADA,
                 ]
             )
             ->join('igrejas', 'inscricoes.igreja_id', '=', 'igrejas.id')

@@ -30,11 +30,16 @@
       <h1 class="title">PAGAMENTO NÃO CONCLUÍDO</h1>
       <p class="result-text">
         Não foi possível concluir o pagamento. Você pode tentar novamente ou falar com a nossa equipe.
+        @if($order) Referência: <strong>{{ $order->reference }}</strong>.@endif
       </p>
     @endif
 
     <div class="result-actions">
-      <a href="{{ route('store.index') }}" class="btn-primary">Voltar à loja</a>
+      @if($type === 'failure' && $order)
+        <a href="{{ route('checkout.payment', $order) }}" class="btn-primary">Tentar pagar de novo</a>
+      @else
+        <a href="{{ route('store.index') }}" class="btn-primary">Voltar à loja</a>
+      @endif
       <a href="https://wa.me/{{ config('services.loja.whatsapp') }}" class="btn-outline">Falar no WhatsApp</a>
     </div>
   </div>

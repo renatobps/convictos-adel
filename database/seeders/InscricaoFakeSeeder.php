@@ -37,14 +37,22 @@ class InscricaoFakeSeeder extends Seeder
 
             $nome = mb_strtoupper($faker->name());
             $statusSorteado = $faker->randomElement($status);
-            $retirada = $faker->boolean(30);
+            $tipo = $faker->randomElement([
+                Inscricao::TIPO_COM_CAMISETA,
+                Inscricao::TIPO_COM_CAMISETA,
+                Inscricao::TIPO_SEM_CAMISETA,
+            ]);
+            $comCamiseta = $tipo === Inscricao::TIPO_COM_CAMISETA;
+            $retirada = $comCamiseta && $faker->boolean(30);
 
             Inscricao::create([
                 'nome' => $nome,
                 'email' => Str::slug($nome, '.').'.'.$faker->numberBetween(1, 9999).'@fake.convictos',
                 'whatsapp' => sprintf('(%02d) 9%04d-%04d', $faker->numberBetween(61, 99), $faker->numberBetween(0, 9999), $faker->numberBetween(0, 9999)),
                 'idade' => (string) $faker->numberBetween(12, 45),
-                'tamanho_camiseta' => $faker->randomElement($tamanhos),
+                'tipo_ingresso' => $tipo,
+                'valor' => $comCamiseta ? 80 : 50,
+                'tamanho_camiseta' => $comCamiseta ? $faker->randomElement($tamanhos) : null,
                 'camiseta_retirada' => $retirada,
                 'camiseta_retirada_em' => $retirada ? $faker->dateTimeBetween('-10 days', 'now') : null,
                 'camiseta_retirada_por' => $retirada ? mb_strtoupper($faker->name()) : null,

@@ -37,6 +37,10 @@
 
 <!-- HERO -->
 <div class="hero">
+  <video class="hero-video" autoplay muted loop playsinline preload="auto" aria-hidden="true">
+    <source src="{{ asset('assets/videos/banner.mp4') }}" type="video/mp4">
+  </video>
+  <div class="hero-video-overlay" aria-hidden="true"></div>
   <img src="{{ asset('assets/logos/chama-cor.png') }}" alt="" class="hero-flame">
   <img src="{{ asset('assets/logos/chama-cor.png') }}" alt="" class="hero-flame2">
   <div class="hero-content">
@@ -187,7 +191,7 @@
     <span class="label">Inscrição</span>
     <div class="cta-title">SEJA<br>CONVICTO</div>
     <div class="cta-verse">"Para que todos sejam um."</div>
-    <p class="cta-sub">Garanta sua vaga na Conferência Convictos UM 2027. Após o cadastro, você receberá orientações no WhatsApp.</p>
+    <p class="cta-sub">Garanta sua vaga na Conferência Convictos UM 2027. O pagamento é somente via PIX — após o cadastro, realize o PIX com o coordenador da sua regional. A inscrição fica pendente até a confirmação do pagamento.</p>
 
     @if(session('inscricao_success'))
       <div class="flash flash-success" style="position:static;margin:0 0 20px;">{{ session('inscricao_success') }}</div>
@@ -206,14 +210,42 @@
         <input type="email" name="email" class="form-input" placeholder="E-mail (opcional)" value="{{ old('email') }}">
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
           <input type="number" name="idade" class="form-input" placeholder="Idade" min="10" max="120" value="{{ old('idade') }}" required>
-          <input type="tel" name="whatsapp" class="form-input" placeholder="(99) 99999-9999" inputmode="numeric" maxlength="15" data-phone value="{{ old('whatsapp') }}" required>
+          <input type="tel" name="whatsapp" class="form-input @error('whatsapp') form-input--error @enderror" placeholder="(99) 99999-9999" inputmode="numeric" maxlength="15" data-phone value="{{ old('whatsapp') }}" required aria-invalid="{{ $errors->has('whatsapp') ? 'true' : 'false' }}">
         </div>
-        <select name="tamanho_camiseta" class="form-input" required>
-          <option value="" disabled {{ old('tamanho_camiseta') ? '' : 'selected' }}>Tamanho da camiseta oficial</option>
-          @foreach(\App\Models\Inscricao::tamanhoCamisetaOptions() as $value => $label)
-            <option value="{{ $value }}" @selected(old('tamanho_camiseta') === $value)>{{ $label }}</option>
-          @endforeach
-        </select>
+        @error('whatsapp')
+          <p class="form-field-error">{{ $message }}</p>
+        @enderror
+
+        <fieldset class="ingresso-tipo" style="border:none;padding:0;margin:0;">
+          <legend style="font-size:0.85rem;color:rgba(255,255,255,0.7);margin-bottom:10px;">Tipo de inscrição</legend>
+          <div class="ingresso-tipo-options">
+            @php $tipoOld = old('tipo_ingresso', \App\Models\Inscricao::TIPO_COM_CAMISETA); @endphp
+            <label class="ingresso-tipo-card">
+              <input type="radio" name="tipo_ingresso" value="{{ \App\Models\Inscricao::TIPO_COM_CAMISETA }}" @checked($tipoOld === \App\Models\Inscricao::TIPO_COM_CAMISETA) required>
+              <span class="ingresso-tipo-card__body">
+                <span class="ingresso-tipo-card__title">Com camiseta</span>
+                <span class="ingresso-tipo-card__price">R$ {{ number_format($valorComCamiseta, 2, ',', '.') }}</span>
+              </span>
+            </label>
+            <label class="ingresso-tipo-card">
+              <input type="radio" name="tipo_ingresso" value="{{ \App\Models\Inscricao::TIPO_SEM_CAMISETA }}" @checked($tipoOld === \App\Models\Inscricao::TIPO_SEM_CAMISETA)>
+              <span class="ingresso-tipo-card__body">
+                <span class="ingresso-tipo-card__title">Sem camiseta</span>
+                <span class="ingresso-tipo-card__price">R$ {{ number_format($valorSemCamiseta, 2, ',', '.') }}</span>
+              </span>
+            </label>
+          </div>
+        </fieldset>
+
+        <div id="campo-tamanho-camiseta">
+          <select name="tamanho_camiseta" id="tamanho_camiseta" class="form-input" @if($tipoOld === \App\Models\Inscricao::TIPO_COM_CAMISETA) required @endif>
+            <option value="" disabled {{ old('tamanho_camiseta') ? '' : 'selected' }}>Tamanho da camiseta oficial</option>
+            @foreach(\App\Models\Inscricao::tamanhoCamisetaOptions() as $value => $label)
+              <option value="{{ $value }}" @selected(old('tamanho_camiseta') === $value)>{{ $label }}</option>
+            @endforeach
+          </select>
+        </div>
+
         @if($igrejas->isEmpty())
           <select name="igreja_id" class="form-input" disabled>
             <option value="">Nenhuma igreja cadastrada ainda</option>
@@ -247,6 +279,30 @@
       (function () {
         var form = document.getElementById('form-inscricao');
         if (!form) return;
+
+        var campoTamanho = document.getElementById('campo-tamanho-camiseta');
+        var selectTamanho = document.getElementById('tamanho_camiseta');
+        var radios = form.querySelectorAll('input[name="tipo_ingresso"]');
+
+        function atualizarTipo() {
+          var selecionado = form.querySelector('input[name="tipo_ingresso"]:checked');
+          var comCamiseta = !selecionado || selecionado.value === 'com_camiseta';
+
+          if (campoTamanho) {
+            campoTamanho.style.display = comCamiseta ? '' : 'none';
+          }
+          if (selectTamanho) {
+            selectTamanho.required = comCamiseta;
+            if (!comCamiseta) {
+              selectTamanho.value = '';
+            }
+          }
+        }
+
+        radios.forEach(function (radio) {
+          radio.addEventListener('change', atualizarTipo);
+        });
+        atualizarTipo();
 
         form.addEventListener('submit', function () {
           if (form.dataset.enviando === '1') return;

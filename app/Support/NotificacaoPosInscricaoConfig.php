@@ -56,9 +56,13 @@ class NotificacaoPosInscricaoConfig
         return "A paz do Senhor, {nome_do_inscrito}! 🙌\n"
             . "Sua inscrição no *Convictos UM 2027* foi registrada com sucesso!\n\n"
             . "Prepare-se para viver um tempo inesquecível na presença de Deus — *Para que todos sejam um*.\n\n"
-            . "Para concluir, procure seu líder de jovens e realize o pagamento do ingresso com camiseta.\n"
-            . "Após a confirmação dos dados, você receberá a validação final.\n\n"
-            . "📌 Tamanho da camiseta: {tamanho_camiseta}\n\n"
+            . "💳 *Pagamento somente via PIX*\n"
+            . "Sua inscrição está *Pendente*. Realize o PIX no valor de *{valor}* ({tipo_ingresso}) com o coordenador da sua regional.\n"
+            . "Assim que o pagamento for confirmado, o status será atualizado para *Pago*.\n\n"
+            . "📌 Tipo: {tipo_ingresso}\n"
+            . "📌 Camiseta: {tamanho_camiseta}\n"
+            . "📌 Valor: {valor}\n"
+            . "📌 Código: {codigo}\n\n"
             . "Qualquer dúvida, estamos à disposição!\n"
             . "Nos vemos lá! 🔥";
     }
@@ -66,10 +70,13 @@ class NotificacaoPosInscricaoConfig
     public static function mensagemConfirmadaPadrao(): string
     {
         return "*A paz do Senhor, {nome_do_inscrito}! 🙌*\n"
-            . "_Seu pagamento foi confirmado com sucesso!_\n\n"
-            . "> Sua inscrição no *Convictos UM 2027* está oficialmente validada!\n\n"
-            . "📌 *Status:* Confirmada\n"
-            . "📌 *Camiseta:* {tamanho_camiseta}\n\n"
+            . "_Seu pagamento via PIX foi confirmado!_\n\n"
+            . "> Sua inscrição no *Convictos UM 2027* está com status *Pago*.\n\n"
+            . "📌 *Status:* Pago\n"
+            . "📌 *Tipo:* {tipo_ingresso}\n"
+            . "📌 *Camiseta:* {tamanho_camiseta}\n"
+            . "📌 *Valor:* {valor}\n"
+            . "📌 *Código:* {codigo}\n\n"
             . "Qualquer dúvida, estamos à disposição!\n"
             . "*Nos vemos lá!* 🔥";
     }

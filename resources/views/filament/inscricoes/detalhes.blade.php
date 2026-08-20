@@ -16,7 +16,9 @@
         ['WhatsApp', $record->whatsapp ?: '—'],
         ['E-mail', $email ?: '— (não informado)'],
         ['Idade', $record->idade.' anos'],
-        ['Tamanho da camiseta', $record->tamanho_camiseta],
+        ['Tipo de inscrição', $record->tipoIngressoLabel()],
+        ['Valor', $record->valor !== null ? 'R$ '.number_format((float) $record->valor, 2, ',', '.') : '—'],
+        ['Tamanho da camiseta', $record->comCamiseta() ? ($record->tamanho_camiseta ?: '—') : 'Sem camiseta'],
         ['Igreja', $igreja ?: '—'],
         ['Regional', $regional ?: '—'],
         ['Líder de jovens', $record->lider_jovens ? 'Sim' : 'Não'],
@@ -50,6 +52,7 @@
     </div>
 
     {{-- Destaque: camiseta retirada --}}
+    @if($record->comCamiseta())
     @if($record->camiseta_retirada)
         <div style="display:flex;align-items:center;gap:12px;border:1px solid #bbf7d0;background:#f0fdf4;border-radius:10px;padding:12px 16px;">
             <div style="font-size:1.4rem;line-height:1;">✅</div>
@@ -68,5 +71,6 @@
             <div style="font-size:1.4rem;line-height:1;">⏳</div>
             <div style="font-size:0.9rem;font-weight:600;color:#6b7280;">Camiseta ainda não retirada</div>
         </div>
+    @endif
     @endif
 </div>

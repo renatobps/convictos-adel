@@ -426,11 +426,10 @@ class WhatsAppService
         $endpoint = $this->resolveEndpoint((string) $this->cfg('media_endpoint'));
         $payload = [
             'number' => $number,
-            'mediatype' => $mediatype,
-            'mimetype' => $this->guessMimeFromMediatype($mediatype, $url),
+            'type' => $mediatype,
+            'url' => $url,
+            'filename' => $filename,
             'caption' => $caption,
-            'media' => $url,
-            'fileName' => $filename,
         ];
 
         $response = $this->post($endpoint, $payload);
@@ -482,11 +481,10 @@ class WhatsAppService
         $endpoint = $this->resolveEndpoint((string) $this->cfg('media_endpoint'));
         $payload = [
             'number' => $number,
-            'mediatype' => $mediatype,
-            'mimetype' => $mimetype,
+            'type' => $mediatype,
+            'url' => 'data:'.$mimetype.';base64,'.base64_encode($conteudo),
+            'filename' => $filename,
             'caption' => $caption,
-            'media' => base64_encode($conteudo),
-            'fileName' => $filename,
         ];
 
         $response = Http::withHeaders($this->headers())
@@ -538,6 +536,7 @@ class WhatsAppService
 
         $originalName = $arquivo->getClientOriginalName() ?: 'arquivo';
         $mediatype ??= $this->detectMediaType($arquivo->getMimeType(), $originalName);
+        $mimetype = $arquivo->getMimeType() ?: $this->guessMimeFromMediatype($mediatype, $originalName);
 
         $path = $arquivo->getRealPath();
         if ($path === false || ! is_readable($path)) {
@@ -546,42 +545,22 @@ class WhatsAppService
             return ['ok' => false, 'erro' => $this->ultimoErro];
         }
 
-        // Formato Evolution API (multipart): file + number + mediatype
-        // Ref: POST /message/sendMedia/{instance} --form file --form number --form mediatype
-        $payload = [
-            'number' => $number,
-            'mediatype' => $mediatype,
-        ];
+        $conteudo = file_get_contents($path);
+        if ($conteudo === false) {
+            $this->ultimoErro = 'Não foi possível ler o arquivo anexo.';
 
-        if (trim($caption) !== '') {
-            $payload['caption'] = $caption;
+            return ['ok' => false, 'erro' => $this->ultimoErro];
         }
 
-        if ($mediatype === 'document') {
-            $payload['fileName'] = $originalName ?: 'arquivo.pdf';
-            $payload['mimetype'] = $arquivo->getMimeType() ?: 'application/pdf';
-        }
-
-        $endpoint = $this->resolveEndpoint((string) $this->cfg('media_endpoint'));
-        $response = Http::withHeaders($this->headersMultipart())
-            ->timeout(120)
-            ->attach('file', fopen($path, 'r'), $originalName)
-            ->post($this->url($endpoint), $payload);
-
-        $body = $response->json();
-
-        if ($response->successful() && empty(data_get($body, 'error'))) {
-            return ['ok' => true, 'erro' => null];
-        }
-
-        $this->ultimoErro = $this->extrairErroApi($response);
-
-        Log::warning('Falha ao enviar mídia via Evolution API.', [
-            'status' => $response->status(),
-            'body' => $response->body(),
-        ]);
-
-        return ['ok' => false, 'erro' => $this->ultimoErro];
+        // Evolution GO espera JSON em /send/media (url/type/filename).
+        return $this->tentarEnviarMidiaBase64(
+            $numero,
+            $caption,
+            $conteudo,
+            $originalName,
+            $mediatype,
+            $mimetype,
+        );
     }
 
     /**
@@ -589,7 +568,6 @@ class WhatsAppService
      */
     public function obterStatusInstancia(string $action = 'all'): array
     {
-        $instance = $this->instanceName();
         $status = null;
         $qrCode = '';
         $pairingCode = '';
@@ -598,47 +576,61 @@ class WhatsAppService
         $erros = [];
 
         if (! $this->isConfigured()) {
-            $erros[] = 'Configure WHATSAPP_API_URL, WHATSAPP_INSTANCE_NAME e WHATSAPP_API_KEY no .env.';
+            $erros[] = 'Configure WHATSAPP_API_URL e WHATSAPP_API_KEY no .env.';
 
-            return compact('status', 'qrCode', 'instanceInfo', 'erros');
+            return compact('status', 'qrCode', 'pairingCode', 'qrMensagem', 'instanceInfo', 'erros');
         }
 
         if (in_array($action, ['status', 'qr', 'all'], true)) {
-            $statusResponse = $this->get("/instance/connectionState/{$instance}");
+            $statusResponse = $this->get('/instance/status');
             if ($statusResponse !== null && $statusResponse->ok()) {
                 $status = $statusResponse->json();
+                $instanceInfo = data_get($status, 'data', $status);
             } elseif (in_array($action, ['status', 'all'], true)) {
-                $erros[] = 'Não foi possível obter o status da instância.';
+                $detalhe = $statusResponse ? $this->extrairErroApi($statusResponse) : '';
+                $erros[] = $detalhe !== '' && $detalhe !== 'Erro desconhecido ao enviar mensagem.'
+                    ? 'Status: '.$detalhe
+                    : 'Não foi possível obter o status da instância.';
             }
         }
 
-        $allResponse = $this->get('/instance/fetchInstances');
+        // Em Evolution GO, /instance/all exige chave global (admin). Com token de instância retorna 401 — isso é esperado.
+        $allResponse = $this->get('/instance/all');
         if ($allResponse !== null && $allResponse->ok()) {
-            $instancias = collect($allResponse->json());
-            $instanceInfo = $instancias->first(
-                fn (mixed $item) => (string) data_get($item, 'name') === $instance
-                    || (string) data_get($item, 'instanceName') === $instance
-            );
-        } elseif ($status === null) {
-            $erros[] = 'Não foi possível listar as instâncias.';
+            $payload = $allResponse->json();
+            $lista = collect(data_get($payload, 'data', $payload));
+            $instanceName = $this->instanceName();
+            $encontrada = $lista->first(function (mixed $item) use ($instanceName, $instanceInfo) {
+                $nome = (string) (data_get($item, 'name') ?? data_get($item, 'Name') ?? data_get($item, 'instanceName') ?? '');
+                $atual = (string) (data_get($instanceInfo, 'Name') ?? '');
+
+                return ($instanceName !== '' && strcasecmp($nome, $instanceName) === 0)
+                    || ($atual !== '' && strcasecmp($nome, $atual) === 0);
+            });
+
+            if (is_array($encontrada)) {
+                $instanceInfo = array_merge(is_array($instanceInfo) ? $instanceInfo : [], $encontrada);
+            }
         }
 
         if (in_array($action, ['qr', 'all'], true)) {
-            $parsed = $this->solicitarQrCode($instance);
+            if ($this->instanciaConectada($status, $instanceInfo)) {
+                $qrMensagem = 'Instância já conectada. Para gerar um novo QR, use "Desconectar e gerar QR".';
+            } else {
+                $parsed = $this->solicitarQrCode();
 
-            if ($parsed['qrCode'] === '' && ! $this->instanciaConectada($status, $instanceInfo)) {
-                usleep(2_000_000);
-                $parsed = $this->solicitarQrCode($instance);
-            }
+                if ($parsed['qrCode'] === '' && $parsed['mensagem'] === '') {
+                    usleep(2_000_000);
+                    $parsed = $this->solicitarQrCode();
+                }
 
-            $qrCode = $parsed['qrCode'];
-            $pairingCode = $parsed['pairingCode'];
-            $qrMensagem = $parsed['mensagem'];
+                $qrCode = $parsed['qrCode'];
+                $pairingCode = $parsed['pairingCode'];
+                $qrMensagem = $parsed['mensagem'];
 
-            if ($qrCode === '' && $qrMensagem === '' && ! $this->instanciaConectada($status, $instanceInfo)) {
-                $erros[] = 'QR Code indisponível. Tente "Desconectar e gerar QR" ou aguarde alguns segundos.';
-            } elseif ($qrMensagem !== '' && $qrCode === '') {
-                // Instância já conectada — mensagem amigável, não é erro.
+                if ($qrCode === '' && $qrMensagem === '') {
+                    $erros[] = 'QR Code indisponível. Tente "Desconectar e gerar QR" ou aguarde alguns segundos.';
+                }
             }
         }
 
@@ -651,12 +643,19 @@ class WhatsAppService
             return false;
         }
 
-        $instance = $this->instanceName();
-        $response = Http::withHeaders($this->headers())
+        $logout = Http::withHeaders($this->headers())
             ->timeout(20)
-            ->delete($this->url("/instance/logout/{$instance}"));
+            ->delete($this->url('/instance/logout'));
 
-        return $response->successful();
+        if ($logout->successful()) {
+            return true;
+        }
+
+        $disconnect = Http::withHeaders($this->headers())
+            ->timeout(20)
+            ->post($this->url('/instance/disconnect'), []);
+
+        return $disconnect->successful();
     }
 
     public function configurarWebhook(?string $url = null): bool
@@ -667,38 +666,22 @@ class WhatsAppService
             return false;
         }
 
-        $instance = $this->instanceName();
-        $payloads = [
-            [
-                'webhook' => [
-                    'enabled' => true,
-                    'url' => $url,
-                    'webhookByEvents' => false,
-                    'webhookBase64' => false,
-                    'events' => ['MESSAGES_UPSERT'],
-                ],
-            ],
-            [
-                'enabled' => true,
-                'url' => $url,
-                'webhookByEvents' => false,
-                'events' => ['MESSAGES_UPSERT'],
-            ],
-        ];
+        $response = Http::withHeaders($this->headers())
+            ->timeout(20)
+            ->post($this->url('/instance/connect'), [
+                'immediate' => true,
+                'webhookUrl' => $url,
+                'subscribe' => ['MESSAGE'],
+            ]);
 
-        foreach ($payloads as $payload) {
-            $response = Http::withHeaders($this->headers())
-                ->timeout(20)
-                ->post($this->url("/webhook/set/{$instance}"), $payload);
-
-            if ($response->successful()) {
-                return true;
-            }
+        if ($response->successful()) {
+            return true;
         }
 
-        Log::warning('Falha ao configurar webhook na Evolution API.', [
-            'instance' => $instance,
+        Log::warning('Falha ao configurar webhook na Evolution GO.', [
             'url' => $url,
+            'status' => $response->status(),
+            'body' => $response->body(),
         ]);
 
         return false;
@@ -707,12 +690,32 @@ class WhatsAppService
     /**
      * @return array{qrCode: string, pairingCode: string, mensagem: string}
      */
-    private function solicitarQrCode(string $instance): array
+    private function solicitarQrCode(): array
     {
-        $response = $this->get("/instance/connect/{$instance}");
+        // Na Evolution GO, o QR costuma ser emitido após iniciar a conexão.
+        Http::withHeaders($this->headers())
+            ->timeout(20)
+            ->post($this->url('/instance/connect'), [
+                'immediate' => false,
+            ]);
 
-        if ($response === null || ! $response->ok()) {
+        $response = $this->get('/instance/qr');
+
+        if ($response === null) {
             return ['qrCode' => '', 'pairingCode' => '', 'mensagem' => ''];
+        }
+
+        if ($response->status() === 400) {
+            $erro = strtolower($this->extrairErroApi($response));
+            if (str_contains($erro, 'already logged in') || str_contains($erro, 'já conect')) {
+                return ['qrCode' => '', 'pairingCode' => '', 'mensagem' => 'Instância já conectada.'];
+            }
+
+            return ['qrCode' => '', 'pairingCode' => '', 'mensagem' => $this->extrairErroApi($response)];
+        }
+
+        if (! $response->ok()) {
+            return ['qrCode' => '', 'pairingCode' => '', 'mensagem' => $this->extrairErroApi($response)];
         }
 
         return $this->parseConnectResponse($response);
@@ -729,7 +732,14 @@ class WhatsAppService
             $json = $json[0];
         }
 
-        $pairingCode = trim((string) (data_get($json, 'pairingCode') ?? ''));
+        $data = is_array(data_get($json, 'data')) ? data_get($json, 'data') : $json;
+
+        $pairingCode = trim((string) (
+            data_get($data, 'pairingCode')
+            ?? data_get($json, 'pairingCode')
+            ?? ''
+        ));
+
         $state = strtolower((string) (
             data_get($json, 'instance.state')
             ?? data_get($json, 'instance.status')
@@ -740,7 +750,14 @@ class WhatsAppService
         $qrCode = '';
 
         foreach ([
+            data_get($data, 'base64'),
+            data_get($data, 'qrcode'),
+            data_get($data, 'qrCode'),
+            data_get($data, 'QR'),
+            data_get($data, 'qr'),
             data_get($json, 'base64'),
+            data_get($json, 'qrcode'),
+            data_get($json, 'qrCode'),
             data_get($json, 'qrcode.base64'),
             data_get($json, 'instance.qrCode.base64'),
             data_get($json, 'instance.qrcode.base64'),
@@ -757,20 +774,28 @@ class WhatsAppService
         }
 
         if ($qrCode === '') {
-            $rawCode = trim((string) (data_get($json, 'code') ?? data_get($json, 'instance.qrCode.code') ?? ''));
-            if ($rawCode !== '' && ! str_starts_with($rawCode, 'data:')) {
-                $qrCode = 'https://quickchart.io/qr?size=260&text='.rawurlencode($rawCode);
+            $code = trim((string) (data_get($data, 'code') ?? data_get($json, 'code') ?? ''));
+            if ($code !== '' && ! str_starts_with($code, '{')) {
+                // Alguns servidores devolvem o raw do QR em "code".
+                $normalized = $this->normalizeBase64Image($code);
+                $qrCode = $normalized;
             }
         }
 
         $mensagem = '';
-        if ($qrCode === '' && in_array($state, ['open', 'connected'], true)) {
-            $mensagem = 'WhatsApp já conectado. Para escanear um novo QR, use "Desconectar e gerar QR".';
-        } elseif ($qrCode === '' && $state === 'connecting') {
-            $mensagem = 'Aguardando QR Code… clique novamente em "Obter QR Code".';
+        if ($qrCode === '') {
+            if (in_array($state, ['open', 'connected'], true)) {
+                $mensagem = 'Instância já conectada.';
+            } elseif (data_get($data, 'Connected') === true || data_get($data, 'LoggedIn') === true) {
+                $mensagem = 'Instância já conectada.';
+            }
         }
 
-        return compact('qrCode', 'pairingCode', 'mensagem');
+        return [
+            'qrCode' => $qrCode,
+            'pairingCode' => $pairingCode,
+            'mensagem' => $mensagem,
+        ];
     }
 
     private function normalizeBase64Image(string $value): string
@@ -793,10 +818,24 @@ class WhatsAppService
 
     public function instanciaConectada(mixed $status = null, mixed $instanceInfo = null): bool
     {
+        foreach ([
+            data_get($status, 'data.Connected'),
+            data_get($status, 'data.LoggedIn'),
+            data_get($status, 'Connected'),
+            data_get($status, 'LoggedIn'),
+            data_get($instanceInfo, 'Connected'),
+            data_get($instanceInfo, 'LoggedIn'),
+        ] as $flag) {
+            if ($flag === true || $flag === 1 || $flag === 'true') {
+                return true;
+            }
+        }
+
         $state = strtolower((string) (
             data_get($status, 'instance.state')
             ?? data_get($status, 'state')
             ?? data_get($instanceInfo, 'connectionStatus')
+            ?? data_get($instanceInfo, 'state')
             ?? ''
         ));
 
@@ -814,20 +853,37 @@ class WhatsAppService
     public function obterDadosInstancia(mixed $status = null, mixed $instanceInfo = null): array
     {
         $nome = trim((string) (
-            data_get($instanceInfo, 'name')
+            data_get($instanceInfo, 'Name')
+            ?? data_get($instanceInfo, 'name')
+            ?? data_get($instanceInfo, 'profileName')
             ?? data_get($instanceInfo, 'instanceName')
+            ?? data_get($status, 'data.Name')
             ?? data_get($status, 'instance.instanceName')
             ?? $this->instanceName()
         ));
 
-        $perfil = trim((string) data_get($instanceInfo, 'profileName', ''));
+        $perfil = trim((string) (
+            data_get($instanceInfo, 'profileName')
+            ?? data_get($instanceInfo, 'Name')
+            ?? data_get($status, 'data.Name')
+            ?? ''
+        ));
         $perfil = $perfil !== '' ? $perfil : null;
 
-        $ownerJid = (string) data_get($instanceInfo, 'ownerJid', '');
+        $ownerJid = (string) (
+            data_get($instanceInfo, 'ownerJid')
+            ?? data_get($instanceInfo, 'jid')
+            ?? data_get($status, 'data.jid')
+            ?? ''
+        );
         $numero = null;
 
         if ($ownerJid !== '') {
             $digits = preg_replace('/\D+/', '', explode('@', $ownerJid)[0] ?? '') ?: '';
+            // Remove device suffix "5561...:3"
+            if (str_contains((string) explode('@', $ownerJid)[0], ':')) {
+                $digits = preg_replace('/\D+/', '', explode(':', explode('@', $ownerJid)[0])[0] ?? '') ?: '';
+            }
 
             if (str_starts_with($digits, '55') && strlen($digits) >= 12) {
                 $local = substr($digits, 4);
@@ -923,8 +979,7 @@ class WhatsAppService
     public function isConfigured(): bool
     {
         return $this->cfg('base_url') !== ''
-            && $this->cfg('api_key') !== ''
-            && $this->instanceName() !== '';
+            && $this->cfg('api_key') !== '';
     }
 
     public function substituirPlaceholdersPublico(string $template, Inscricao $inscricao): string
@@ -936,7 +991,13 @@ class WhatsAppService
     {
         return strtr($template, [
             '{nome_do_inscrito}' => (string) $inscricao->nome,
-            '{tamanho_camiseta}' => (string) $inscricao->tamanho_camiseta,
+            '{tamanho_camiseta}' => $inscricao->comCamiseta()
+                ? (string) $inscricao->tamanho_camiseta
+                : 'Sem camiseta',
+            '{tipo_ingresso}' => $inscricao->tipoIngressoLabel(),
+            '{valor}' => $inscricao->valor !== null
+                ? 'R$ '.number_format((float) $inscricao->valor, 2, ',', '.')
+                : '',
             '{codigo}' => (string) $inscricao->codigo,
             '{link_ingresso}' => filled($inscricao->codigo) ? $inscricao->urlIngresso() : '',
         ]);
@@ -969,12 +1030,23 @@ class WhatsAppService
 
     private function get(string $endpoint): ?Response
     {
-        $response = Http::withHeaders($this->headers())
-            ->timeout(20)
-            ->get($this->url($endpoint));
+        try {
+            $response = Http::withHeaders($this->headers())
+                ->timeout(20)
+                ->get($this->url($endpoint));
+        } catch (\Throwable $e) {
+            Log::warning('Falha de conexão com Evolution GO.', [
+                'endpoint' => $endpoint,
+                'message' => $e->getMessage(),
+            ]);
+
+            return null;
+        }
 
         if (in_array($response->status(), [401, 403, 404], true)) {
-            return null;
+            $this->ultimoErro = $this->extrairErroApi($response);
+
+            return $response->status() === 401 ? $response : null;
         }
 
         return $response;
@@ -1056,18 +1128,30 @@ class WhatsAppService
     private function extrairErroApi(Response $response): string
     {
         $body = $response->json();
-        $message = data_get($body, 'response.message');
+        $message = data_get($body, 'response.message')
+            ?? data_get($body, 'message')
+            ?? data_get($body, 'error')
+            ?? data_get($body, 'data.error');
 
         if (is_array($message)) {
             $message = implode(' ', array_map('strval', $message));
         }
 
-        $message = trim((string) ($message ?: data_get($body, 'error', '')));
+        $message = trim((string) $message);
 
-        if (str_contains(strtolower($message), 'connection closed')) {
+        // "success" não é erro — alguns endpoints GO usam message=success.
+        if (strtolower($message) === 'success') {
+            $message = '';
+        }
+
+        if (str_contains(strtolower($message), 'connection closed') || str_contains(strtolower($message), 'not authorized')) {
+            if (str_contains(strtolower($message), 'not authorized')) {
+                return 'Não autorizado. Verifique se WHATSAPP_API_KEY é o token da instância na Evolution GO.';
+            }
+
             return 'WhatsApp desconectado. Acesse Notificações → Configuração WPP e reconecte a instância.';
         }
 
-        return $message !== '' ? $message : 'Erro desconhecido ao enviar mensagem.';
+        return $message !== '' ? $message : 'Erro desconhecido ao comunicar com a Evolution GO.';
     }
 }

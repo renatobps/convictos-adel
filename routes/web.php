@@ -32,13 +32,17 @@ Route::delete('/carrinho/{rowId}', [CartController::class, 'remove'])->name('car
 // Checkout
 Route::get('/checkout', [CheckoutController::class, 'index'])->name('checkout.index');
 Route::post('/checkout', [CheckoutController::class, 'store'])->name('checkout.store');
+Route::get('/checkout/pagamento/{order:reference}', [CheckoutController::class, 'payment'])->name('checkout.payment');
+Route::post('/checkout/pagamento/{order:reference}', [CheckoutController::class, 'processPayment'])->name('checkout.pay');
 Route::get('/checkout/sucesso', [CheckoutController::class, 'success'])->name('checkout.success');
 Route::get('/checkout/falha', [CheckoutController::class, 'failure'])->name('checkout.failure');
 Route::get('/checkout/pendente', [CheckoutController::class, 'pending'])->name('checkout.pending');
 
-// Webhook MercadoPago
+// Webhook MercadoPago (loja)
 Route::post('/webhooks/mercadopago', [MercadoPagoWebhookController::class, 'handle'])
     ->name('webhooks.mercadopago');
+Route::post('/webhooks/mercado-pago', [MercadoPagoWebhookController::class, 'handle'])
+    ->name('webhooks.mercadopago.alt');
 
 // Webhook Evolution API (enquetes / mensagens recebidas)
 Route::post('/webhook', [EvolutionWebhookController::class, 'handle'])

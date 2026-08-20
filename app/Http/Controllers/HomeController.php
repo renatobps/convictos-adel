@@ -23,9 +23,19 @@ class HomeController extends Controller
             ->orderBy('bairro')
             ->get();
 
-        $dataEventoRaw = DB::table('inscricao_meta_configuracoes')->value('data_evento');
+        $config = DB::table('inscricao_meta_configuracoes')->first();
+        $dataEventoRaw = $config?->data_evento ?? null;
         $dataEvento = $dataEventoRaw ? Carbon::parse($dataEventoRaw)->startOfDay() : null;
 
-        return view('home', compact('featured', 'igrejas', 'dataEvento'));
+        $valorComCamiseta = (float) ($config?->valor_com_camiseta ?? $config?->valor_inscricao ?? 0);
+        $valorSemCamiseta = (float) ($config?->valor_sem_camiseta ?? 0);
+
+        return view('home', compact(
+            'featured',
+            'igrejas',
+            'dataEvento',
+            'valorComCamiseta',
+            'valorSemCamiseta',
+        ));
     }
 }

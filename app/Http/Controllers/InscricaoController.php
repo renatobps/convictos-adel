@@ -2,35 +2,57 @@
 
 namespace App\Http\Controllers;
 
-use App\Mail\InscricaoAdmin;
-use App\Mail\InscricaoStatusMail;
+use App\Jobs\EnviarNotificacoesPosInscricao;
 use App\Models\Igreja;
 use App\Models\Inscricao;
-use App\Services\WhatsAppService;
-use App\Support\EmailConfig;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 
 class InscricaoController extends Controller
 {
-    public function __construct(
-        protected WhatsAppService $whatsApp
-    ) {}
-
     public function store(Request $request)
     {
-        $validated = $request->validate([
-            'nome' => ['required', 'string', 'max:255'],
-            'email' => ['nullable', 'email', 'max:255'],
-            'whatsapp' => ['required', 'string', 'regex:/^\(\d{2}\) \d{5}-\d{4}$/'],
-            'idade' => ['required', 'integer', 'min:10', 'max:120'],
-            'tamanho_camiseta' => ['required', 'string', 'in:P,M,G,GG,XG'],
-            'igreja_id' => ['required', 'integer', 'exists:igrejas,id'],
-            'lider' => ['required', 'in:sim,nao'],
-        ], [
-            'whatsapp.regex' => 'Informe o WhatsApp no formato (99) 99999-9999.',
-        ]);
+        try {
+            $validated = $request->validate([
+                'nome' => ['required', 'string', 'max:255'],
+                'email' => ['nullable', 'email', 'max:255'],
+                'whatsapp' => [
+                    'required',
+                    'string',
+                    'regex:/^\(\d{2}\) \d{5}-\d{4}$/',
+                    function (string $attribute, mixed $value, \Closure $fail): void {
+                        if (Inscricao::jaExisteWhatsapp((string) $value)) {
+                            $fail('Este número de celular já foi usado em uma inscrição. Cada pessoa pode se inscrever apenas uma vez.');
+                        }
+                    },
+                ],
+                'idade' => ['required', 'integer', 'min:10', 'max:120'],
+                'tipo_ingresso' => ['required', Rule::in([Inscricao::TIPO_COM_CAMISETA, Inscricao::TIPO_SEM_CAMISETA])],
+                'tamanho_camiseta' => [
+                    'nullable',
+                    'string',
+                    Rule::requiredIf($request->input('tipo_ingresso') === Inscricao::TIPO_COM_CAMISETA),
+                    Rule::in(array_keys(Inscricao::tamanhoCamisetaOptions())),
+                ],
+                'igreja_id' => ['required', 'integer', 'exists:igrejas,id'],
+                'lider' => ['required', 'in:sim,nao'],
+            ], [
+                'whatsapp.regex' => 'Informe o WhatsApp no formato (99) 99999-9999.',
+                'tipo_ingresso.required' => 'Selecione se a inscrição será com ou sem camiseta.',
+                'tamanho_camiseta.required' => 'Selecione o tamanho da camiseta.',
+                'tamanho_camiseta.required_if' => 'Selecione o tamanho da camiseta.',
+            ]);
+        } catch (ValidationException $e) {
+            throw $e->redirectTo(route('home').'#inscricao');
+        }
+
+        $config = DB::table('inscricao_meta_configuracoes')->first();
+        $comCamiseta = $validated['tipo_ingresso'] === Inscricao::TIPO_COM_CAMISETA;
+        $valor = $comCamiseta
+            ? (float) ($config?->valor_com_camiseta ?? $config?->valor_inscricao ?? 0)
+            : (float) ($config?->valor_sem_camiseta ?? 0);
 
         $igreja = Igreja::query()->with('regional')->findOrFail($validated['igreja_id']);
 
@@ -39,48 +61,20 @@ class InscricaoController extends Controller
             'email' => $validated['email'] ?: 'inscrito.'.now()->timestamp.'@convictos.local',
             'whatsapp' => $validated['whatsapp'],
             'idade' => (string) $validated['idade'],
-            'tamanho_camiseta' => $validated['tamanho_camiseta'],
+            'tipo_ingresso' => $validated['tipo_ingresso'],
+            'valor' => round($valor, 2),
+            'tamanho_camiseta' => $comCamiseta ? $validated['tamanho_camiseta'] : null,
             'igreja_id' => $igreja->id,
             'igreja' => $igreja->nomeNoFormulario(),
             'lider_jovens' => $validated['lider'] === 'sim',
-            'status' => Inscricao::STATUS_AGUARDANDO,
+            'status' => Inscricao::STATUS_PENDENTE,
         ]);
 
-        // Envia notificações (WhatsApp/e-mail) somente após a resposta ser
-        // entregue ao usuário, para que o redirecionamento seja imediato.
-        app()->terminating(function () use ($inscricao): void {
-            try {
-                app(WhatsAppService::class)->enviarPosInscricao($inscricao);
-            } catch (\Throwable $e) {
-                Log::error('Falha ao enviar WhatsApp pós-inscrição', ['message' => $e->getMessage()]);
-            }
-
-            $this->sendEmails($inscricao);
-        });
+        // Fila: a página de sucesso responde na hora; WhatsApp/e-mail rodam depois.
+        EnviarNotificacoesPosInscricao::dispatch($inscricao->id);
 
         return redirect()
             ->route('ingresso.show', ['inscricao' => $inscricao->codigo])
-            ->with('inscricao_success', 'Inscrição recebida! Este é o seu ingresso digital — guarde o código abaixo.');
-    }
-
-    protected function sendEmails(Inscricao $inscricao): void
-    {
-        if (str_contains($inscricao->email, '@convictos.local')) {
-            return;
-        }
-
-        try {
-            EmailConfig::aplicarMailer();
-
-            if (EmailConfig::templateAtivo(EmailConfig::TIPO_REALIZADA)) {
-                Mail::to($inscricao->email)->send(new InscricaoStatusMail($inscricao, EmailConfig::TIPO_REALIZADA));
-            }
-
-            if ($admin = config('services.loja.email_admin')) {
-                Mail::to($admin)->send(new InscricaoAdmin($inscricao));
-            }
-        } catch (\Throwable $e) {
-            Log::error('Falha ao enviar e-mail de inscrição', ['message' => $e->getMessage()]);
-        }
+            ->with('inscricao_success', 'Inscrição registrada com status Pendente. Realize o pagamento via PIX com o coordenador da sua regional. Guarde o código do ingresso abaixo.');
     }
 }

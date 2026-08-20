@@ -184,6 +184,54 @@
         }
         .rel-accordion-igreja-cell--indent { padding-left: 2.25rem; }
         .rel-accordion-igreja-cell.num { text-align: right; font-variant-numeric: tabular-nums; }
+        .rel-igreja-link {
+            background: none; border: 0; padding: 0; margin: 0; cursor: pointer;
+            color: #1d4ed8; font: inherit; font-weight: 600; text-align: left;
+            text-decoration: underline; text-underline-offset: 2px;
+        }
+        .rel-igreja-link:hover { color: #1e3a8a; }
+        .dark .rel-igreja-link { color: #93c5fd; }
+        .dark .rel-igreja-link:hover { color: #bfdbfe; }
+        .rel-mob-igreja__nome.rel-igreja-link { display: inline; font-size: 0.88rem; }
+        .rel-modal-backdrop {
+            position: fixed; inset: 0; z-index: 80;
+            background: rgba(15, 23, 42, 0.55);
+            display: flex; align-items: center; justify-content: center;
+            padding: 1rem;
+        }
+        .rel-modal {
+            width: min(720px, 100%); max-height: min(85vh, 720px);
+            background: #fff; border-radius: 14px; overflow: hidden;
+            box-shadow: 0 25px 50px rgba(0,0,0,.25);
+            display: flex; flex-direction: column;
+        }
+        .dark .rel-modal { background: rgb(24 24 27); }
+        .rel-modal__head {
+            display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem;
+            padding: 1rem 1.15rem; border-bottom: 1px solid #e5e7eb; background: #f8fafc;
+        }
+        .dark .rel-modal__head { background: rgb(39 39 42); border-bottom-color: rgb(63 63 70); }
+        .rel-modal__title { margin: 0; font-size: 1rem; font-weight: 700; color: #111827; }
+        .dark .rel-modal__title { color: #f4f4f5; }
+        .rel-modal__sub { margin: 0.2rem 0 0; font-size: 0.8rem; color: #6b7280; }
+        .rel-modal__close {
+            border: 0; background: transparent; cursor: pointer; font-size: 1.35rem;
+            line-height: 1; color: #6b7280; padding: 0.15rem 0.4rem; border-radius: 6px;
+        }
+        .rel-modal__close:hover { background: #e5e7eb; color: #111827; }
+        .dark .rel-modal__close:hover { background: rgb(63 63 70); color: #f4f4f5; }
+        .rel-modal__body { overflow: auto; padding: 0; }
+        .rel-modal__empty { padding: 1.5rem; text-align: center; color: #6b7280; font-size: 0.9rem; }
+        .rel-modal-table { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
+        .rel-modal-table th, .rel-modal-table td { padding: 0.7rem 1rem; border-bottom: 1px solid #f3f4f6; text-align: left; }
+        .dark .rel-modal-table th, .dark .rel-modal-table td { border-bottom-color: rgb(39 39 42); }
+        .rel-modal-table th {
+            font-size: 0.7rem; text-transform: uppercase; letter-spacing: .04em;
+            color: #6b7280; background: #f9fafb; font-weight: 700; position: sticky; top: 0;
+        }
+        .dark .rel-modal-table th { background: rgb(39 39 42); color: #a1a1aa; }
+        .rel-modal-table tr:hover td { background: #f9fafb; }
+        .dark .rel-modal-table tr:hover td { background: rgb(39 39 42); }
         .rel-accordion-group.is-open .regional-row td { border-bottom-color: transparent; }
         .rel-detalhamento-desktop { display: block; }
         .rel-detalhamento-mobile.rel-mob-acc {
@@ -306,12 +354,12 @@
                 <div class="rel-kpi__sub">Meta: {{ number_format($resumo['meta_total'], 0, ',', '.') }} ({{ $resumo['percentual_meta'] }}%)</div>
             </div>
             <div class="rel-kpi rel-kpi--green">
-                <div class="rel-kpi__label">Confirmadas</div>
+                <div class="rel-kpi__label">Pagas</div>
                 <div class="rel-kpi__value">{{ number_format($resumo['confirmadas'], 0, ',', '.') }}</div>
                 <div class="rel-kpi__sub">{{ $resumo['percentual_confirmadas'] }}% do total</div>
             </div>
             <div class="rel-kpi rel-kpi--amber">
-                <div class="rel-kpi__label">Aguardando</div>
+                <div class="rel-kpi__label">Pendentes</div>
                 <div class="rel-kpi__value">{{ number_format($resumo['aguardando'], 0, ',', '.') }}</div>
             </div>
             <div class="rel-kpi rel-kpi--red">
@@ -321,7 +369,7 @@
             <div class="rel-kpi">
                 <div class="rel-kpi__label">Valor arrecadado</div>
                 <div class="rel-kpi__value" style="font-size:1.35rem">R$ {{ number_format($resumo['valor_arrecadado'], 2, ',', '.') }}</div>
-                <div class="rel-kpi__sub">R$ {{ number_format($resumo['valor_inscricao'], 2, ',', '.') }} por inscrição</div>
+                <div class="rel-kpi__sub">Com: R$ {{ number_format($resumo['valor_com_camiseta'] ?? $resumo['valor_inscricao'], 2, ',', '.') }} · Sem: R$ {{ number_format($resumo['valor_sem_camiseta'] ?? 0, 2, ',', '.') }}</div>
             </div>
         </section>
 
@@ -410,8 +458,8 @@
                                 </div>
 
                                 <div class="rel-reg-chips">
-                                    <span class="rel-reg-chip rel-reg-chip--c">✔ <b>{{ $card['confirmadas'] }}</b> confirmadas</span>
-                                    <span class="rel-reg-chip rel-reg-chip--a">⏳ <b>{{ $card['aguardando'] }}</b> aguardando</span>
+                                    <span class="rel-reg-chip rel-reg-chip--c">✔ <b>{{ $card['confirmadas'] }}</b> pagas</span>
+                                    <span class="rel-reg-chip rel-reg-chip--a">⏳ <b>{{ $card['aguardando'] }}</b> pendentes</span>
                                     <span class="rel-reg-chip rel-reg-chip--x">✕ <b>{{ $card['canceladas'] }}</b> canceladas</span>
                                 </div>
 
@@ -451,11 +499,11 @@
                                     <th>Igreja / Regional</th>
                                     <th>Dirigente</th>
                                     <th class="num">Total</th>
-                                    <th class="num">Confirmadas</th>
-                                    <th class="num">Aguardando</th>
+                                    <th class="num">Pagas</th>
+                                    <th class="num">Pendentes</th>
                                     <th class="num">Canceladas</th>
                                     <th class="num">Arrecadado</th>
-                                    <th class="num">% conf.</th>
+                                    <th class="num">% pagas</th>
                                 </tr>
                             </thead>
                             @foreach($igrejasPorRegional as $grupo)
@@ -495,7 +543,14 @@
                                                 <div class="rel-accordion-panel-inner">
                                                     @foreach($grupo['igrejas'] as $igreja)
                                                         <div class="rel-accordion-igreja-row">
-                                                            <div class="rel-accordion-igreja-cell rel-accordion-igreja-cell--indent">{{ $igreja['bairro'] }}</div>
+                                                            <div class="rel-accordion-igreja-cell rel-accordion-igreja-cell--indent">
+                                                                <button
+                                                                    type="button"
+                                                                    class="rel-igreja-link"
+                                                                    wire:click="abrirDetalheIgreja({{ (int) $igreja['igreja_id'] }})"
+                                                                    title="Ver inscrições desta igreja"
+                                                                >{{ $igreja['bairro'] }}</button>
+                                                            </div>
                                                             <div class="rel-accordion-igreja-cell">{{ $igreja['dirigente'] }}</div>
                                                             <div class="rel-accordion-igreja-cell num">{{ $igreja['total'] }}</div>
                                                             <div class="rel-accordion-igreja-cell num">{{ $igreja['confirmadas'] }}</div>
@@ -539,11 +594,11 @@
                                                 <b>{{ $grupo['total'] }}</b>
                                             </div>
                                             <div class="rel-mob-regional__stat">
-                                                <span>Confirmadas</span>
+                                                <span>Pagas</span>
                                                 <b>{{ $grupo['confirmadas'] }}</b>
                                             </div>
                                             <div class="rel-mob-regional__stat">
-                                                <span>Aguardando</span>
+                                                <span>Pendentes</span>
                                                 <b>{{ $grupo['aguardando'] }}</b>
                                             </div>
                                             <div class="rel-mob-regional__stat">
@@ -562,7 +617,11 @@
                                         <div class="rel-mob-regional__igrejas">
                                             @foreach($grupo['igrejas'] as $igreja)
                                                 <article class="rel-mob-igreja">
-                                                    <p class="rel-mob-igreja__nome">{{ $igreja['bairro'] }}</p>
+                                                    <button
+                                                        type="button"
+                                                        class="rel-mob-igreja__nome rel-igreja-link"
+                                                        wire:click="abrirDetalheIgreja({{ (int) $igreja['igreja_id'] }})"
+                                                    >{{ $igreja['bairro'] }}</button>
                                                     <p class="rel-mob-igreja__dirigente">{{ $igreja['dirigente'] ?: '—' }}</p>
                                                     <div class="rel-mob-igreja__grid">
                                                         <div class="rel-mob-igreja__item">
@@ -570,11 +629,11 @@
                                                             <span>{{ $igreja['total'] }}</span>
                                                         </div>
                                                         <div class="rel-mob-igreja__item">
-                                                            <label>Confirmadas</label>
+                                                            <label>Pagas</label>
                                                             <span>{{ $igreja['confirmadas'] }}</span>
                                                         </div>
                                                         <div class="rel-mob-igreja__item">
-                                                            <label>Aguardando</label>
+                                                            <label>Pendentes</label>
                                                             <span>{{ $igreja['aguardando'] }}</span>
                                                         </div>
                                                         <div class="rel-mob-igreja__item">
@@ -586,7 +645,7 @@
                                                             <span>R$ {{ number_format($igreja['valor_arrecadado'], 2, ',', '.') }}</span>
                                                         </div>
                                                         <div class="rel-mob-igreja__item">
-                                                            <label>% confirmadas</label>
+                                                            <label>% pagas</label>
                                                             <span>{{ $igreja['percentual_confirmadas'] }}%</span>
                                                         </div>
                                                     </div>
@@ -658,4 +717,60 @@
             </div>
         </section>
     </div>
+
+    @if($this->detalheIgrejaId)
+        @php
+            $listaIgreja = $this->inscricoesIgrejaDetalhe;
+        @endphp
+        <div
+            class="rel-modal-backdrop"
+            wire:click.self="fecharDetalheIgreja"
+            x-data
+            x-on:keydown.escape.window="$wire.fecharDetalheIgreja()"
+        >
+            <div class="rel-modal" role="dialog" aria-modal="true" aria-labelledby="rel-modal-title">
+                <div class="rel-modal__head">
+                    <div>
+                        <h3 class="rel-modal__title" id="rel-modal-title">Inscrições — {{ $this->detalheIgrejaNome }}</h3>
+                        <p class="rel-modal__sub">{{ $listaIgreja->count() }} inscrição(ões)</p>
+                    </div>
+                    <button type="button" class="rel-modal__close" wire:click="fecharDetalheIgreja" aria-label="Fechar">×</button>
+                </div>
+                <div class="rel-modal__body">
+                    @if($listaIgreja->isEmpty())
+                        <p class="rel-modal__empty">Nenhuma inscrição encontrada para esta igreja.</p>
+                    @else
+                        <table class="rel-modal-table">
+                            <thead>
+                                <tr>
+                                    <th>Nome</th>
+                                    <th>WhatsApp</th>
+                                    <th>Tipo</th>
+                                    <th>Status</th>
+                                    <th>Valor</th>
+                                    <th>Data</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach($listaIgreja as $inscricao)
+                                    <tr>
+                                        <td>{{ $inscricao->nome }}</td>
+                                        <td>{{ $inscricao->whatsapp ?: '—' }}</td>
+                                        <td>{{ $inscricao->tipoIngressoLabel() }}</td>
+                                        <td>
+                                            <span @class(['rel-badge', 'rel-badge--'.$inscricao->status])>
+                                                {{ \App\Models\Inscricao::statusOptions()[$inscricao->status] ?? $inscricao->status }}
+                                            </span>
+                                        </td>
+                                        <td>{{ $inscricao->valor !== null ? 'R$ '.number_format((float) $inscricao->valor, 2, ',', '.') : '—' }}</td>
+                                        <td>{{ $inscricao->created_at?->format('d/m/Y H:i') }}</td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    @endif
+                </div>
+            </div>
+        </div>
+    @endif
 </x-filament-panels::page>

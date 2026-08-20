@@ -14,6 +14,7 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->validateCsrfTokens(except: [
             'webhooks/mercadopago',
+            'webhooks/mercado-pago',
             'webhook',
             'webhook/*',
         ]);

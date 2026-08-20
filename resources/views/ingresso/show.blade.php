@@ -53,16 +53,40 @@
                     @endif
                     <div class="ticket-grid">
                         <div class="ticket-field">
-                            <span class="ticket-field-label">Camiseta</span>
-                            <span class="ticket-field-value">{{ $inscricao->tamanho_camiseta ?: '—' }}</span>
+                            <span class="ticket-field-label">Tipo</span>
+                            <span class="ticket-field-value">{{ $inscricao->tipoIngressoLabel() }}</span>
                         </div>
                         <div class="ticket-field">
                             <span class="ticket-field-label">Idade</span>
                             <span class="ticket-field-value">{{ $inscricao->idade ?: '—' }}</span>
                         </div>
                     </div>
+                    <div class="ticket-grid">
+                        <div class="ticket-field">
+                            <span class="ticket-field-label">Camiseta</span>
+                            <span class="ticket-field-value">{{ $inscricao->comCamiseta() ? ($inscricao->tamanho_camiseta ?: '—') : 'Sem camiseta' }}</span>
+                        </div>
+                        <div class="ticket-field">
+                            <span class="ticket-field-label">Valor</span>
+                            <span class="ticket-field-value">{{ $inscricao->valor !== null ? 'R$ '.number_format((float) $inscricao->valor, 2, ',', '.') : '—' }}</span>
+                        </div>
+                    </div>
                 </div>
             </div>
+
+            @if($inscricao->estaPendente())
+                <div class="ticket-notice ticket-notice--pix">
+                    <strong>Pagamento via PIX</strong>
+                    <p>Sua inscrição está <strong>Pendente</strong>. Realize o PIX{{ $inscricao->valor !== null ? ' de R$ '.number_format((float) $inscricao->valor, 2, ',', '.') : '' }} com o coordenador da sua regional. O status será atualizado para <strong>Pago</strong> após a confirmação.</p>
+                </div>
+            @endif
+
+            @if($inscricao->comCamiseta())
+                <div class="ticket-notice ticket-notice--camiseta">
+                    <strong>Camiseta oficial</strong>
+                    <p>Assim que a camiseta estiver disponível, seu líder de jovens receberá uma notificação informando que ela está pronta para retirada.</p>
+                </div>
+            @endif
 
             <div class="ticket-foot">
                 <p>Guarde este ingresso. Você pode salvá-lo nos favoritos ou tirar um print.</p>
@@ -97,6 +121,11 @@
     .ticket-field-label { font-size: .7rem; text-transform: uppercase; letter-spacing: .6px; color: #9ca3af; font-weight: 600; }
     .ticket-field-value { font-size: 1.02rem; font-weight: 600; color: #1f2937; }
     .ticket-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .ticket-notice { margin: 0 24px 16px; padding: 14px 16px; border-radius: 10px; font-size: .86rem; line-height: 1.45; text-align: left; }
+    .ticket-notice strong { display: block; margin-bottom: 4px; font-size: .8rem; text-transform: uppercase; letter-spacing: .4px; }
+    .ticket-notice p { margin: 0; }
+    .ticket-notice--pix { background: #fff7ed; border: 1px solid #fdba74; color: #9a3412; }
+    .ticket-notice--camiseta { background: #eff6ff; border: 1px solid #93c5fd; color: #1e3a8a; }
     .ticket-foot { border-top: 2px dashed #e5e7eb; padding: 18px 24px; text-align: center; font-size: .82rem; color: #6b7280; }
     .ticket-verse { font-style: italic; margin: 8px 0 0; color: #0b1f4b; }
     .ticket-actions { display: flex; gap: 12px; justify-content: center; margin-top: 22px; }

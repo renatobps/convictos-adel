@@ -76,7 +76,7 @@ class EmailConfiguracao extends Page
             ->components([
                 Form::make([
                     Section::make($heading)
-                        ->description('Placeholders disponíveis: {nome_do_inscrito}, {tamanho_camiseta}, {igreja}, {status}, {email}')
+                        ->description('Placeholders disponíveis: {nome_do_inscrito}, {tipo_ingresso}, {tamanho_camiseta}, {valor}, {igreja}, {status}, {email}')
                         ->schema([
                             Toggle::make('ativo')
                                 ->label('Enviar este e-mail automaticamente')
@@ -193,6 +193,8 @@ class EmailConfiguracao extends Page
         $inscricao = new Inscricao([
             'nome' => Auth::user()?->name ?? 'Inscrito de teste',
             'email' => $email,
+            'tipo_ingresso' => Inscricao::TIPO_COM_CAMISETA,
+            'valor' => 80,
             'tamanho_camiseta' => 'M',
             'igreja' => 'Igreja Exemplo',
             'status' => $tipo === EmailConfig::TIPO_CONFIRMADA

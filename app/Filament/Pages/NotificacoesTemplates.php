@@ -62,7 +62,7 @@ class NotificacoesTemplates extends Page
             ->components([
                 Form::make([
                     Section::make('Mensagem pós-inscrição')
-                        ->description('Placeholders: {nome_do_inscrito}, {tamanho_camiseta}')
+                        ->description('Placeholders: {nome_do_inscrito}, {tipo_ingresso}, {tamanho_camiseta}, {valor}')
                         ->schema([
                             Textarea::make('mensagem_pos_inscricao')
                                 ->label('Mensagem')

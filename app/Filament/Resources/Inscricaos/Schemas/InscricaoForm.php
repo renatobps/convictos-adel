@@ -51,16 +51,36 @@ class InscricaoForm
                 TextInput::make('whatsapp')
                     ->label('WhatsApp')
                     ->tel()
-                    ->required(),
+                    ->required()
+                    ->rules([
+                        fn (?Inscricao $record): \Closure => function (string $attribute, mixed $value, \Closure $fail) use ($record): void {
+                            if (Inscricao::jaExisteWhatsapp((string) $value, $record?->id)) {
+                                $fail('Este número de celular já foi usado em outra inscrição.');
+                            }
+                        },
+                    ]),
                 TextInput::make('idade')
                     ->label('Idade')
                     ->numeric()
                     ->minValue(10)
                     ->maxValue(120),
+                Select::make('tipo_ingresso')
+                    ->label('Tipo de inscrição')
+                    ->options(Inscricao::tipoIngressoOptions())
+                    ->default(Inscricao::TIPO_COM_CAMISETA)
+                    ->required()
+                    ->live(),
+                TextInput::make('valor')
+                    ->label('Valor (R$)')
+                    ->numeric()
+                    ->minValue(0)
+                    ->step(0.01),
                 Select::make('tamanho_camiseta')
                     ->label('Tamanho da camiseta')
                     ->options(Inscricao::tamanhoCamisetaOptions())
-                    ->required(),
+                    ->required(fn (callable $get): bool => $get('tipo_ingresso') === Inscricao::TIPO_COM_CAMISETA)
+                    ->visible(fn (callable $get): bool => $get('tipo_ingresso') !== Inscricao::TIPO_SEM_CAMISETA)
+                    ->dehydrated(fn (callable $get): bool => $get('tipo_ingresso') === Inscricao::TIPO_COM_CAMISETA),
                 Select::make('igreja_id')
                     ->label('Igreja')
                     ->relationship('igrejaRel', 'bairro')
@@ -83,7 +103,7 @@ class InscricaoForm
                 Select::make('status')
                     ->label('Status')
                     ->options(Inscricao::statusOptions())
-                    ->default(Inscricao::STATUS_AGUARDANDO)
+                    ->default(Inscricao::STATUS_PENDENTE)
                     ->required(),
                 Textarea::make('observacoes')
                     ->label('Observações')
